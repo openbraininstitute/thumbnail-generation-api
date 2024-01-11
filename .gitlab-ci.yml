@@ -1,0 +1,24 @@
+stages:
+  - lint
+  - test
+
+image: python:3.9
+
+
+lint_black:
+  stage: lint
+  script:
+    - pip install black
+    - black --check .
+
+lint_pylint:
+  stage: lint
+  script:
+    - pip install -r requirements.txt
+    - pylint api
+
+unit_tests:
+  stage: test
+  script:
+    - pip install -r requirements.txt
+    - pytest  
