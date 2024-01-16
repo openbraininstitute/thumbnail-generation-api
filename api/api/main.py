@@ -16,6 +16,8 @@ Example:
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from api import config
 from api.router import generate
 
 tags_metadata = [
@@ -27,9 +29,18 @@ tags_metadata = [
 
 app = FastAPI(
     title="Thumbnail Generation API",
-    debug=True,
-    version="0.1.0",
+    debug=config.DEBUG_MODE,
+    version="0.1.1",
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(config.WHITELISTED_CORS_URLS.split(",")),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Include routers
 app.include_router(generate.router, prefix="/generate")
