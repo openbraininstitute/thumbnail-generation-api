@@ -1,9 +1,19 @@
 FROM python:3.9
 
-WORKDIR /code
-COPY . /code
 
-RUN pip install --no-cache-dir -r /code/requirements.txt
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    POETRY_VIRTUALENVS_CREATE=false
+
+WORKDIR /code
+
+COPY pyproject.toml poetry.lock /code/
+
+RUN pip install poetry
+
+RUN poetry install --no-dev --no-interaction --no-ansi
+
+COPY . /code
 
 EXPOSE 8080
 
