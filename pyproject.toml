@@ -6,6 +6,7 @@ authors = [
     "Konstantinos Platis <konstantinos.platis@epfl.ch>",
     "Harry Robert Taylor Anderson <harry.anderson@epfl.ch>",
 ]
+packages = [{ include = "api" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
