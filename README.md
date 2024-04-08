@@ -1,8 +1,15 @@
 # Thumbnail Generation API
 
+## Prerequisites
+
+Install the following packages:
+
+- python
+- poetry
+
 ## Installation
 
-Navigate under `/api` and run `pip install -r requirements.txt`.
+Run `poetry install`
 
 ## Environment Variables
 

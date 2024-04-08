@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [0.3.0] - 05/04/2024
+
+### Removed
+
+- Server configuration folder
+
+### Modified
+
+- Folder structure to include only `/api`
+- Installation to use `poetry`
+- Python version to `3.12`
+
+
 ## [0.2.3] - 12/02/2024
 
 ### Fixed
