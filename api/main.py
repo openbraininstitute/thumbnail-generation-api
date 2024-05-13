@@ -2,36 +2,29 @@
 Thumbnail Generation API
 
 This module defines a FastAPI application for a Thumbnail Generation API.
-
-The application includes a single route:
-
-- GET /: Returns a simple JSON response with the message "Hello World."
-
-Usage:
-1. Import the FastAPI class.
-2. Create an instance of the FastAPI class with the desired configuration.
-3. Define routes using the @app.get() decorator.
-
-Example:
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import config
-from api.router import generate
+from api.router import generate, swc, health
 
 tags_metadata = [
     {
+        "name": "Health",
+        "description": "Endpoints related to checking the health of the application",
+    },
+    {
         "name": "Generate",
-        "description": "Generate a PNG image of a morphology",
+        "description": "Endpoints related to generating the thumbnail of a resource",
+    },
+    {
+        "name": "Soma",
+        "description": "Endpoints related to generating the soma reconstruction of a morphology",
     },
 ]
 
-app = FastAPI(
-    title="Thumbnail Generation API",
-    debug=config.DEBUG_MODE,
-    version="0.3.0",
-)
+app = FastAPI(title="Thumbnail Generation API", debug=config.DEBUG_MODE, version="0.4.0", openapi_tags=tags_metadata)
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,6 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Include routers
-app.include_router(generate.router, prefix="/generate")
+app.include_router(generate.router, prefix="/generate", tags=["Generate"])
+app.include_router(swc.router, prefix="/soma", tags=["Soma"])
+app.include_router(health.router, tags=["Health"])
