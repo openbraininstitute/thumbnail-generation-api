@@ -1,3 +1,5 @@
+"""NeuroMorphoVis options module."""
+
 import nmv.options
 import nmv.utilities as nmvu
 
@@ -27,7 +29,7 @@ class NeuroMorphoVisOptions:
         # Shading options
         self.shading = nmv.options.ShadingOptions()
 
-        # Synaptics options
+        # Synaptic options
         self.synaptics = nmv.options.SynapticsOptions()
 
     # @consume_arguments
