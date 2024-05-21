@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.2] - 21/05/2024
+
+### Modified
+
+- Remove option Y-up to keep original coordinates
+
 ## [0.4.1] - 12/05/2024
 
 ### Fixed
@@ -30,20 +36,17 @@ All notable changes to this project will be documented in this file.
 - Installation to use `poetry`
 - Python version to `3.12`
 
-
 ## [0.2.3] - 12/02/2024
 
 ### Fixed
 
 - Dockerhub image deployment path
 
-
 ## [0.2.2] - 07/02/2024
 
 ### Added
 
 - CI job to deploy service in Dockerhub
-
 
 ## [0.2.1] - 30/01/2024
 
@@ -73,4 +76,3 @@ All notable changes to this project will be documented in this file.
 - Add Gitlab CI pipeline to lint, test and deploy
 - Add NGINX server to enable caching
 - Add black and pylint linters
-
