@@ -6,13 +6,11 @@ This module provides functions to generate morphology PNG images.
 
 import io
 from typing import Union
-
-from fastapi import Header
 import matplotlib.pyplot as plt
 import neurom as nm
+from fastapi import Header
 from neurom.view import matplotlib_impl, matplotlib_utils
-
-from api.util import get_buffer, get_file_content, wrap_exceptions
+from api.util import get_buffer, get_file_content
 
 
 def plot_morphology(nrn) -> plt.FigureBase:
@@ -36,7 +34,6 @@ def plot_morphology(nrn) -> plt.FigureBase:
     return fig
 
 
-@wrap_exceptions
 def read_image(authorization: str = Header(None), content_url: str = "", dpi: Union[int, None] = 72) -> bytes:
     """
     Returns a PNG image of a morphology (by generating a matplotlib figure from its SWC distribution).
@@ -47,6 +44,9 @@ def read_image(authorization: str = Header(None), content_url: str = "", dpi: Un
 
     Returns:
         Response: FastAPI Response object containing the PNG image.
+    Raises:regar
+        InvalidUrlParameterException: The content url is incorrect
+        ResourceNotFoundException: The resource does not exist in the provided content url
     """
     morph = get_file_content(authorization, content_url).decode(encoding="utf-8")
 
