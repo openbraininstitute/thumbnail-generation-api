@@ -4,10 +4,12 @@ Thumbnail Generation API
 This module defines a FastAPI application for a Thumbnail Generation API.
 """
 
+from contextlib import asynccontextmanager
+import sentry_sdk
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import config
 from api.router import generate, swc, health
+from api.settings import settings
 
 tags_metadata = [
     {
@@ -24,20 +26,39 @@ tags_metadata = [
     },
 ]
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan events set the events that will be executed at the startup (before yield)
+    and the shutdown (after yield) of the application
+    """
+    # pylint: disable=unused-argument
+    # pylint: disable=redefined-outer-name
+    # Startup code
+    if settings.sentry_dsn:
+        sentry_sdk.init(
+            dsn=settings.sentry_dsn, traces_sample_rate=0.2, profiles_sample_rate=0.05, environment=settings.environment
+        )
+    yield
+
+
 app = FastAPI(
     title="Thumbnail Generation API",
-    debug=config.DEBUG_MODE,
+    debug=settings.debug_mode,
+    lifespan=lifespan,
     version="0.5.0",
     openapi_tags=tags_metadata,
-    docs_url=f"{config.BASE_PATH}/docs",
-    openapi_url=f"{config.BASE_PATH}/openapi.json",
+    docs_url=f"{settings.base_path}/docs",
+    openapi_url=f"{settings.base_path}/openapi.json",
 )
 
-base_router = APIRouter(prefix=config.BASE_PATH)
+
+base_router = APIRouter(prefix=settings.base_path)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(config.WHITELISTED_CORS_URLS.split(",")),
+    allow_origins=list(settings.whitelisted_cors_urls.split(",")),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
