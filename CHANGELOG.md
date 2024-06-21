@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 20/06/2024
+
+### Added
+
+- Sentry configuration for better exception tracking
+- Files to prepare repository for open sourcing
+ 
+### Modified
+
+- Exception handling in API
+- Move functions to `services` and `utils` modules to differentiate business logic
+- Pydoc strings to make them uniform
+- Add unit tests related to `services` and `utils`
+- Replace `matplotlib` `set_tight_layout()` with `set_layout_engine` due to deprecation
+- Replace `config` by `Settings` class for better settings organization
+
 ## [0.4.4] - 11/06/2024
 
 ### Fixed
