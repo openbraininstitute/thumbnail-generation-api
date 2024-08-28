@@ -7,6 +7,11 @@ stages:
   - test
   - deploy
 
+variables:
+  KUBERNETES_MEMORY_LIMIT: 8Gi
+  KUBERNETES_MEMORY_REQUEST: 8Gi
+
+
 lint_black:
   image: python:3.10.12
   stage: lint
@@ -48,7 +53,5 @@ build-and-deploy-api-image-in-registry:
       variables:
         CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/thumbnail-generation-api-production
   variables:
-    KUBERNETES_MEMORY_LIMIT: 4Gi
-    KUBERNETES_MEMORY_REQUEST: 4Gi
     CI_COMMIT_SHORT_SHA: $CI_COMMIT_SHORT_SHA
     REGISTRY_IMAGE_TAG: $CI_COMMIT_SHORT_SHA-$(date +%s)

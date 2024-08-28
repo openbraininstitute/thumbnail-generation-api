@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 27/08/2024
+
+### Fixed
+
+- Edge case when generated soma file contains underscore not being found
+- Look for response using property starting in vcs_, ccs_ or ic_, instead of just ic_
+- Exception thrown when user is not authorized to access nexus resource
+
+### Updated
+
+- Dependency versions for `fastapi/gunicorn/requests/sentry/black`
+
+### Added
+
+- Endpoint for generating single neuron simulation plot images
+
 ## [0.5.3] - 08/08/2024
 
 ### Fixed

@@ -35,6 +35,13 @@ class ExpiredAccessToken(HTTPException):
         super().__init__(status_code=401, detail="The access token has expired")
 
 
+class AuthorizationIssueException(HTTPException):
+    """Exception raised when Nexus throws authorization error"""
+
+    def __init__(self):
+        super().__init__(status_code=401, detail="The user does not have access in the content")
+
+
 # Nexus
 
 
@@ -91,11 +98,11 @@ class NoProtocolFound(SentryReportedException):
         super().__init__(status_code=404, detail="The NWB file didn't contain a 'protocol'")
 
 
-class NoIcDataFound(SentryReportedException):
-    "Thrown when no Ic data is found."
+class NoResponseFound(SentryReportedException):
+    "Thrown when no Response data is found."
 
     def __init__(self):
-        super().__init__(status_code=404, detail="The NWB file didn't contain any Ic data.")
+        super().__init__(status_code=404, detail="The NWB file didn't contain any Response data.")
 
 
 class NoUnitFound(SentryReportedException):
