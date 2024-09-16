@@ -6,6 +6,7 @@ This module defines a FastAPI application for a Thumbnail Generation API.
 
 from contextlib import asynccontextmanager
 import sentry_sdk
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.router import generate, swc, health
@@ -66,6 +67,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ASGI middleware to capture incoming HTTP request
+app.add_middleware(SentryAsgiMiddleware)
 
 # Include routers
 base_router.include_router(generate.router, prefix="/generate", tags=["Generate"])
