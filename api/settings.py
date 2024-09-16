@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     base_path: str = ""
     environment: Environment = Environment.LOCAL
     sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 0.2
+    sentry_profiles_sample_rate: float = 0.05
 
     @property
     def debug_mode(self) -> bool:

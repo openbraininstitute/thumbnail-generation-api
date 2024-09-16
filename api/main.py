@@ -6,6 +6,7 @@ This module defines a FastAPI application for a Thumbnail Generation API.
 
 from contextlib import asynccontextmanager
 import sentry_sdk
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.router import generate, swc, health
@@ -38,7 +39,10 @@ async def lifespan(app: FastAPI):
     # Startup code
     if settings.sentry_dsn:
         sentry_sdk.init(
-            dsn=settings.sentry_dsn, traces_sample_rate=0.2, profiles_sample_rate=0.05, environment=settings.environment
+            dsn=settings.sentry_dsn,
+            traces_sample_rate=settings.sentry_traces_sample_rate,
+            profiles_sample_rate=settings.sentry_profiles_sample_rate,
+            environment=settings.environment,
         )
     yield
 
@@ -47,7 +51,7 @@ app = FastAPI(
     title="Thumbnail Generation API",
     debug=settings.debug_mode,
     lifespan=lifespan,
-    version="0.6.0",
+    version="0.6.1",
     openapi_tags=tags_metadata,
     docs_url=f"{settings.base_path}/docs",
     openapi_url=f"{settings.base_path}/openapi.json",
@@ -63,6 +67,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ASGI middleware to capture incoming HTTP request
+app.add_middleware(SentryAsgiMiddleware)
 
 # Include routers
 base_router.include_router(generate.router, prefix="/generate", tags=["Generate"])
