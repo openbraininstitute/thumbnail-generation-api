@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Updated
 
 - Re-organised unit test fixtures to include them in conftest file
-
+- Make Sentry metrics environment variables
 
 ## [0.6.0] - 27/08/2024
 
