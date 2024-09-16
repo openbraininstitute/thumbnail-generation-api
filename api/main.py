@@ -38,7 +38,10 @@ async def lifespan(app: FastAPI):
     # Startup code
     if settings.sentry_dsn:
         sentry_sdk.init(
-            dsn=settings.sentry_dsn, traces_sample_rate=0.2, profiles_sample_rate=0.05, environment=settings.environment
+            dsn=settings.sentry_dsn,
+            traces_sample_rate=settings.sentry_traces_sample_rate,
+            profiles_sample_rate=settings.sentry_profiles_sample_rate,
+            environment=settings.environment,
         )
     yield
 
