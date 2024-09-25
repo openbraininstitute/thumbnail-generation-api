@@ -5,7 +5,8 @@ ENV PYTHONUNBUFFERED=1 \
     POETRY_VIRTUALENVS_CREATE=false \
     PATH="/app/blender/bbp-blender-3.5/blender-bbp:${PATH}"
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     wget \
     unzip \
     curl \
@@ -18,7 +19,18 @@ RUN apt-get update && apt-get install -y \
     libdbus-1-3 \
     libxkbcommon0 \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    vim \
+    supervisor \
+    nginx \
+    jq \
+    htop \
+    strace \
+    net-tools \
+    iproute2 \
+    psmisc \
+    procps \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -46,6 +58,9 @@ COPY ./nmv/options/neuromorphovis_options.py /app/nmv/options/
 #soma_reconstruction.py has export to glb patched in
 COPY ./nmv/interface/cli/soma_reconstruction.py /app/interface/cli/
 
+COPY ./nginx/ /etc/nginx/
+COPY ./supervisord.conf /etc/supervisor/supervisord.conf
+
 COPY pyproject.toml /app/
 
 RUN pip install poetry
@@ -54,8 +69,8 @@ RUN poetry install --no-dev --no-interaction --no-ansi --no-root
 
 COPY . /app
 
-EXPOSE 8080
+EXPOSE 80
 
 ENV PYTHONPATH "${PYTHONPATH}:${WORKDIR}/app/api"
 
-CMD ["gunicorn", "main:app", "--workers", "2", "--threads", "1", "--bind", "0.0.0.0:8080", "-k", "uvicorn.workers.UvicornWorker", "--timeout", "250"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
