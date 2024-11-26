@@ -23,7 +23,7 @@ To get started with the Thumbnail Generation API, follow these simple steps:
 
 4. **Run the application:**
     ```sh
-    poetry run uvicorn main:app --reload
+    poetry run uvicorn api.main:app --reload
     ```
 
 Your Thumbnail Generation API should now be running at `http://127.0.0.1:8000`.
