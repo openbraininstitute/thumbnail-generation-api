@@ -216,10 +216,10 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         response = self.client.get(
             "/generate/simulation-plot",
             headers=mock_headers,
-            params={"content_url": "http://example.com/image", "target": "simulation"},
+            params={"content_url": "http://example.com/image", "target": "stimulus"},
         )
 
-        assert response.status_code == status.NOT_FOUND
+        assert response.status_code == status.BAD_GATEWAY
 
     @patch(
         "api.services.simulation_img.fetch_file_content",
@@ -235,4 +235,4 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
             params={"content_url": "http://example.com/image", "target": "simulation"},
         )
 
-        assert response.status_code == status.NOT_FOUND
+        assert response.status_code == status.BAD_GATEWAY
