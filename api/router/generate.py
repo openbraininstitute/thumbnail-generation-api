@@ -89,6 +89,6 @@ def get_simulation_plot(config: SimulationGenerationInput = Depends(), user: Use
             raise HTTPException(status_code=status.NOT_FOUND, detail="Simulation results data not found")
         return Response(image, media_type="image/png")
     except ValueError as exc:
-        raise HTTPException(status.NOT_FOUND, "Simulation config file is malformed") from exc
+        raise HTTPException(status.BAD_GATEWAY, "Simulation config file is malformed") from exc
     except Exception as exc:
         raise HTTPException(status.INTERNAL_SERVER_ERROR, "Internal server error") from exc
