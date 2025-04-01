@@ -1,3 +1,5 @@
+# pylint: disable=duplicate-code
+
 """
 Module: trace_img.py
 
@@ -6,15 +8,23 @@ This module exposes the business logic for generating trace thumbnails
 
 import io
 from typing import Any, Union
+
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
-from api.utils.common import get_buffer
-from api.services.nexus import fetch_file_content
-from api.utils.trace_img import select_element, select_protocol, select_response, get_unit, get_conversion, get_rate
-from api.models.enums import MetaType
 
+from api.models.enums import MetaType
+from api.services.nexus import fetch_file_content
+from api.utils.common import get_buffer
+from api.utils.trace_img import (
+    get_conversion,
+    get_rate,
+    get_unit,
+    select_element,
+    select_protocol,
+    select_response,
+)
 
 Num = Union[int, float]
 

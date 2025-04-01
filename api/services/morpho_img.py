@@ -6,11 +6,13 @@ This module exposes the business logic for generating morphology thumbnails
 
 import io
 from typing import Union
+
 import matplotlib.pyplot as plt
 import neurom as nm
 from neurom.view import matplotlib_impl, matplotlib_utils
-from api.utils.common import get_buffer
+
 from api.services.nexus import fetch_file_content
+from api.utils.common import get_buffer
 
 
 def plot_morphology(morphology) -> plt.Figure:
