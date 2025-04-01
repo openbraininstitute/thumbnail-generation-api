@@ -4,8 +4,8 @@ Module: exceptions.py
 This module defines a custom exception classes
 """
 
-from fastapi import HTTPException
 import sentry_sdk
+from fastapi import HTTPException
 
 
 class SentryReportedException(HTTPException):
@@ -131,3 +131,10 @@ class NoConversionFound(SentryReportedException):
 
     def __init__(self):
         super().__init__(status_code=404, detail="The NWB file didn't contain a 'conversion'.")
+
+
+class ContentEmpty(SentryReportedException):
+    "Thrown when file content is empty."
+
+    def __init__(self, msg: str | None = "The file has no content"):
+        super().__init__(status_code=404, detail=msg)
