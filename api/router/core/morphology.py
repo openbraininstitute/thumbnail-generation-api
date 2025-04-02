@@ -60,7 +60,7 @@ async def get_morphology_preview(
     morphology_file = None
     try:
         async with get_entitycore_client() as core_client:
-            download_url = await core_client.download_entity_asset(
+            download_url = await core_client.get_asset_download_url(
                 entity_type=EntityType.RECONSTRUCTION_MORPHOLOGY,
                 entity_id=entity_id,
                 asset_id=asset_id,
@@ -80,7 +80,7 @@ async def get_morphology_preview(
             image_bytes = buffer.getvalue()
         except Exception as ex:
             raise ApiError(
-                message=f"Error while converting asset to buffer: {ex}",
+                message=f"Error while generating the plot: {ex}",
                 error_code=ApiErrorCode.BUFFERING_ERROR,
                 http_status_code=status.BAD_REQUEST,
             ) from ex

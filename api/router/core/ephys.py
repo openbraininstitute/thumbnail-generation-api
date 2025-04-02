@@ -62,7 +62,7 @@ async def get_ephys_content(
 ) -> str:
     """Get the ephys file content from the entity core service."""
     async with get_entitycore_client() as core_client:
-        download_url = await core_client.download_entity_asset(
+        download_url = await core_client.get_asset_download_url(
             entity_type=EntityType.SINGLE_CELL_EXPERIMENTAL_TRACE,
             entity_id=entity_id,
             asset_id=asset_id,

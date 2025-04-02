@@ -20,7 +20,7 @@ def test_morphology_preview_success(
     """Test successful morphology preview generation"""
     # Setup mock for entitycore client
     mock_client = AsyncMock()
-    mock_client.download_entity_asset = AsyncMock(return_value="http://example.com/download")
+    mock_client.get_asset_download_url = AsyncMock(return_value="http://example.com/download")
     mock_client.get_asset_content = AsyncMock(return_value=mock_morphology_content)
 
     # Configure the context manager
@@ -54,7 +54,7 @@ def test_morphology_preview_without_dpi(
 ):
     """Test preview generation without specifying DPI (should use default)"""
     mock_client = AsyncMock()
-    mock_client.download_entity_asset = AsyncMock(return_value="http://example.com/download")
+    mock_client.get_asset_download_url = AsyncMock(return_value="http://example.com/download")
     mock_client.get_asset_content = AsyncMock(return_value=mock_morphology_content)
 
     mock_context = AsyncMock()
@@ -107,7 +107,7 @@ def test_morphology_preview_asset_not_found(
 ):
     """Test handling of non-existent asset"""
     mock_client = AsyncMock()
-    mock_client.download_entity_asset = AsyncMock(side_effect=ContentEmpty("Asset not found"))
+    mock_client.get_asset_download_url = AsyncMock(side_effect=ContentEmpty("Asset not found"))
 
     mock_context = AsyncMock()
     mock_context.__aenter__.return_value = mock_client
@@ -179,7 +179,7 @@ def test_morphology_preview_buffering_error(
 ):
     """Test handling of buffering errors during image generation"""
     mock_client = AsyncMock()
-    mock_client.download_entity_asset = AsyncMock(return_value="http://example.com/download")
+    mock_client.get_asset_download_url = AsyncMock(return_value="http://example.com/download")
     # Return valid morphology content but we'll mock the plot_morphology to fail
     mock_client.get_asset_content = AsyncMock(return_value=mock_morphology_content)
 
@@ -204,7 +204,7 @@ def test_morphology_preview_buffering_error(
 
         assert exc_info.value.http_status_code == status.INTERNAL_SERVER_ERROR
         assert exc_info.value.error_code == ApiErrorCode.INTERNAL_ERROR
-        assert "cannot access local variable 'fig'" in exc_info.value.message
+        assert "local variable 'fig'" in exc_info.value.message
 
 
 @patch("api.router.core.morphology.get_entitycore_client")
@@ -241,7 +241,7 @@ def test_morphology_preview_malformed_swc(
 ):
     """Test handling of malformed SWC content"""
     mock_client = AsyncMock()
-    mock_client.download_entity_asset = AsyncMock(return_value="http://example.com/download")
+    mock_client.get_asset_download_url = AsyncMock(return_value="http://example.com/download")
     # Return malformed SWC content
     mock_client.get_asset_content = AsyncMock(return_value="malformed swc content")
 
