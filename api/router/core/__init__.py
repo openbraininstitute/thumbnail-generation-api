@@ -1,7 +1,7 @@
 """
 Module: core.py
 
-This module provides routes for generating core previews
+This module provides routes for generating previews
 """
 
 from fastapi import APIRouter

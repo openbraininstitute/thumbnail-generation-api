@@ -23,18 +23,18 @@ dev:  ## Run development server
 	@$(call load_env,run-local)
 	poetry run uvicorn api.main:app --reload --port 8003
 
-format:  ## Format code using black
-	poetry run black .
-
-check-format:  ## Check code formatting without making changes
+format: ## Format code using black
+	poetry run black . 
+	
+check-format: ## Check code formatting without making changes
 	poetry run black --check .
 
-lint:  ## Run pylint
-	poetry run pylint api
+lint: check-format lint-pylint   ## Run all linting checks
 
-test:  ## Run tests
+test: ## Run tests
 	poetry run pytest
-
-lint: check-format lint-pylint  ## Run all linting checks
-
-ci: format lint test  ## Run all CI checks (linting and tests)
+	
+ci: format lint test ## Run all CI checks (linting and tests)
+	
+build:
+	docker build --platform linux/amd64 -t thumbnail-api .

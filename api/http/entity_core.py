@@ -183,7 +183,7 @@ class EntityCoreClient:
         response.raise_for_status()
         return AssetRead.model_validate(response.json())
 
-    async def download_entity_asset(
+    async def get_asset_download_url(
         self,
         entity_type: EntityType,
         entity_id: uuid.UUID,

@@ -1,9 +1,9 @@
 """Custom enum."""
 
-from enum import StrEnum
+from enum import Enum
 
 
-class UpperStrEnum(StrEnum):
+class UpperStrEnum(str, Enum):
     """Enum where members are also (and must be) strings.
 
     When using auto(), the resulting value is the upper-cased version of the member name.
