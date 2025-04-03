@@ -203,8 +203,8 @@ def test_morphology_preview_buffering_error(
             )
 
         assert exc_info.value.http_status_code == status.INTERNAL_SERVER_ERROR
-        assert exc_info.value.error_code == ApiErrorCode.INTERNAL_ERROR
-        assert "local variable 'fig'" in exc_info.value.message
+        assert exc_info.value.error_code == ApiErrorCode.BUFFERING_ERROR
+        assert "Error while generating the plot" in exc_info.value.message
 
 
 @patch("api.router.core.morphology.get_entitycore_client")

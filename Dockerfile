@@ -1,4 +1,4 @@
-FROM python:3.10.14-slim-bookworm
+FROM python:3.12
 
 ENV PYTHONUNBUFFERED=1 \
   PYTHONDONTWRITEBYTECODE=1 \
@@ -20,7 +20,7 @@ RUN apt-get update && \
   libxkbcommon0 \
   git \
   vim \
-  supervisor \
+  supervisor \ 
   nginx \
   jq \
   htop \
@@ -29,10 +29,14 @@ RUN apt-get update && \
   iproute2 \
   psmisc \
   procps \
+  libxml2-dev \
+  libxslt1-dev \ 
+  python3-libxml2 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
 
 RUN wget https://raw.githubusercontent.com/BlueBrain/NeuroMorphoVis/master/setup.py  \
   && chmod +x setup.py \
@@ -63,14 +67,12 @@ COPY ./supervisord.conf /etc/supervisor/supervisord.conf
 
 COPY pyproject.toml /app/
 
-RUN pip install poetry==1.8.2
+RUN pip install poetry
+RUN poetry install --without dev --no-interaction --no-ansi --no-root
 
-RUN poetry --version && poetry install --without dev --no-interaction --no-ansi --no-root
 
 COPY . /app
 
 EXPOSE 80
-
-ENV PYTHONPATH "${PYTHONPATH}:${WORKDIR}/app/api"
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
