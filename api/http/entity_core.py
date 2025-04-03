@@ -13,6 +13,7 @@ from urllib.parse import urljoin
 
 import httpx
 from fastapi import Header, Request
+from loguru import logger as L
 from pydantic import BaseModel
 
 from api.exceptions import ContentEmpty
@@ -246,6 +247,7 @@ async def get_entitycore_client():
     Yields:
         EntityCoreClient: An instance of the client
     """
+    L.info("entity_core_uri:", settings.entity_core_uri)
     async with EntityCoreClient(settings.entity_core_uri) as client:
         yield client
 

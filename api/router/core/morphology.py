@@ -66,29 +66,14 @@ async def get_morphology_preview(
                 asset_id=asset_id,
                 context=context,
             )
+
+            L.info(
+                f"download_url: {download_url}",
+            )
             morphology_file = await core_client.get_asset_content(download_url)
 
         # Load the morphology from the downloaded content
         morphology = nm.load_morphology(io.StringIO(morphology_file), reader="swc")
-
-        try:
-            # Generate the buffer for the image
-            fig = plot_morphology(morphology)
-            buffer = get_buffer(fig, dpi)
-
-            # Convert buffer to bytes
-            image_bytes = buffer.getvalue()
-        except Exception as ex:
-            raise ApiError(
-                message=f"Error while generating the plot: {ex}",
-                error_code=ApiErrorCode.BUFFERING_ERROR,
-                http_status_code=status.BAD_REQUEST,
-            ) from ex
-        finally:
-            # Explicitly close the figure to release memory
-            plt.close(fig)
-
-        return Response(image_bytes, media_type="image/png")
     except ContentEmpty as ex:
         L.error(f"ContentEmpty error while getting morphology preview: {ex}")
         raise ApiError(
@@ -98,8 +83,25 @@ async def get_morphology_preview(
         ) from ex
     except Exception as ex:
         L.error(f"Server error while getting morphology preview: {ex}")
+        L.exception(ex)
         raise ApiError(
             message=str(ex),
             error_code=ApiErrorCode.INTERNAL_ERROR,
+            http_status_code=status.INTERNAL_SERVER_ERROR,
+        ) from ex
+
+    try:
+        # Generate the buffer for the image
+        fig = plot_morphology(morphology)
+        buffer = get_buffer(fig, dpi)
+
+        # Convert buffer to bytes
+        image_bytes = buffer.getvalue()
+        plt.close(fig)
+        return Response(image_bytes, media_type="image/png")
+    except Exception as ex:
+        raise ApiError(
+            message=f"Error while generating the plot: {ex}",
+            error_code=ApiErrorCode.BUFFERING_ERROR,
             http_status_code=status.INTERNAL_SERVER_ERROR,
         ) from ex

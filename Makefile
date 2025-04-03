@@ -20,7 +20,7 @@ install:  ## Install dependencies using poetry
 	poetry install
 
 dev:  ## Run development server
-	@$(call load_env,run-local)
+	@$(call load_env,local)
 	poetry run uvicorn api.main:app --reload --port 8003
 
 format: ## Format code using black
@@ -38,3 +38,9 @@ ci: format lint test ## Run all CI checks (linting and tests)
 	
 build:
 	docker build --platform linux/amd64 -t thumbnail-api .
+
+up:  ## Run the application in Docker
+	docker compose --env-file ./.env.local -f docker-compose.yaml up --watch --remove-orphans
+
+destroy:  ## Take down the application and remove the volumes
+	docker compose down --remove-orphans --volumes

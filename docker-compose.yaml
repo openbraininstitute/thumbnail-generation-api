@@ -1,14 +1,23 @@
-version: "3"
+version: '3.8'
 
 services:
-  thumbnail-generation-api:
+  thumbnail-api:
+    platform: linux/amd64
+    container_name: thumbnail-api
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8003:80"
+    volumes:
+      - ./output:/app/output
+    environment:
+      - entity_core_uri=http://host.docker.internal:8000
+      - PYTHONUNBUFFERED=1
+      - ENVIRONMENT=production
     networks:
       - app-network
+    restart: unless-stopped
 
 networks:
   app-network:
