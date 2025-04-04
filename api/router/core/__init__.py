@@ -10,7 +10,7 @@ from api.router.core.ephys import router as ephys_router
 from api.router.core.morphology import router as morphology_router
 from api.settings import settings
 
-core_router = APIRouter(prefix=f"{settings.base_path}/core")
+core_router = APIRouter(prefix=f"/core")
 
 
 core_router.include_router(morphology_router)
