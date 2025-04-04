@@ -65,7 +65,7 @@ base_router = APIRouter(prefix=settings.base_path)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(settings.whitelisted_cors_urls.split(",")),
+    allow_origins=settings.whitelisted_cors_urls or [],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
