@@ -50,7 +50,7 @@ class EphysData:
 
 
 router = APIRouter(
-    prefix="/single-cell-experimental-trace",
+    prefix="/electrical-cell-recording",
 )
 require_bearer = HTTPBearer()
 
@@ -63,7 +63,7 @@ async def get_ephys_content(
     """Get the ephys file content from the entity core service."""
     async with get_entitycore_client() as core_client:
         download_url = await core_client.get_asset_download_url(
-            entity_type=EntityType.SINGLE_CELL_EXPERIMENTAL_TRACE,
+            entity_type=EntityType.ELECTRICAL_CELL_RECORDING,
             entity_id=entity_id,
             asset_id=asset_id,
             context=context,
@@ -77,8 +77,12 @@ def extract_ephys_data(ephys_file: str) -> EphysData:
         h5_handle = h5_handle["data_organization"]
         h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0)]
         h5_handle = h5_handle[select_protocol(list(h5_handle.keys()))]
-        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)]
-        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=-3, meta=MetaType.SWEEP)]
+        h5_handle = h5_handle[
+            select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)
+        ]
+        h5_handle = h5_handle[
+            select_element(list(h5_handle.keys()), n=-3, meta=MetaType.SWEEP)
+        ]
         h5_handle = h5_handle[select_response(list(h5_handle.keys()))]
 
         # Get relevant data, unit, rate, and conversion factor

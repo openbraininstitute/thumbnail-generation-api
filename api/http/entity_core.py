@@ -29,7 +29,7 @@ class EntityType(str, Enum):
     EXPERIMENTAL_SYNAPSES_PER_CONNECTION = "experimental-synapses-per-connection"
     MESH = "mesh"
     RECONSTRUCTION_MORPHOLOGY = "reconstruction-morphology"
-    SINGLE_CELL_EXPERIMENTAL_TRACE = "single-cell-experimental-trace"
+    ELECTRICAL_CELL_RECORDING = "electrical-cell-recording"
 
 
 class AssetStatus(str, Enum):
@@ -205,7 +205,9 @@ class EntityCoreClient:
         Raises:
             ContentEmpty: If the download URL cannot be extracted
         """
-        url = self._build_url(f"{entity_type.value}/{entity_id}/assets/{asset_id}/download")
+        url = self._build_url(
+            f"{entity_type.value}/{entity_id}/assets/{asset_id}/download"
+        )
 
         response = await self._client.get(
             url,
