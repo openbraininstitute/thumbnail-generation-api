@@ -8,7 +8,7 @@ handling asset management and retrieval operations for assets.
 import uuid
 from contextlib import asynccontextmanager
 from enum import Enum
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Literal, Optional, Union, cast, overload
 from urllib.parse import urljoin
 
 import httpx
@@ -217,25 +217,40 @@ class EntityCoreClient:
             return response.headers.get("location")
         raise ContentEmpty("Download url can not be extracted")
 
-    async def get_asset_content(self, url: str) -> bytes:
+    @overload
+    async def get_asset_content(self, url: str, as_type: Literal["bytes"]) -> bytes: ...
+
+    @overload
+    async def get_asset_content(self, url: str, as_type: Literal["str"]) -> str: ...
+
+    @overload
+    async def get_asset_content(self, url: str) -> bytes: ...
+
+    async def get_asset_content(self, url: str, as_type: Literal["bytes", "str"] = "bytes") -> Union[bytes, str]:
         """Get the content of an asset from its URL.
 
         Args:
             url: URL of the asset
+            as_type: Expected content type, either 'bytes' or 'str'
 
         Returns:
-            Content of the asset as bytes
+            Content of the asset as bytes or str
 
         Raises:
             ContentEmpty: If the content cannot be retrieved
         """
         response = await self._client.get(url)
         response.raise_for_status()
-        file_content = response.content
 
-        if file_content is None:
+        if as_type == "str":
+            file_content = response.text
+        else:
+            file_content = response.content
+
+        if not file_content:
             raise ContentEmpty()
-        return cast(bytes, file_content)
+
+        return cast(Union[bytes, str], file_content)
 
 
 @asynccontextmanager
