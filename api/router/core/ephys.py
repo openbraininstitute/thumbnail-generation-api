@@ -73,6 +73,7 @@ async def get_ephys_content(
 
 def extract_ephys_data(ephys_file: str) -> EphysData:
     """Extract data from the ephys HDF5 file."""
+    # pylint: disable-msg=too-many-locals
     with h5py.File(io.BytesIO(ephys_file), "r") as h5_handle:
         try:
             # LNMC-complient format containing data organization hierarchy
