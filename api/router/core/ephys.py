@@ -74,20 +74,38 @@ async def get_ephys_content(
 def extract_ephys_data(ephys_file: str) -> EphysData:
     """Extract data from the ephys HDF5 file."""
     with h5py.File(io.BytesIO(ephys_file), "r") as h5_handle:
-        h5_handle = h5_handle["data_organization"]
-        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0)]
-        h5_handle = h5_handle[select_protocol(list(h5_handle.keys()))]
-        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)]
-        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=-3, meta=MetaType.SWEEP)]
-        h5_handle = h5_handle[select_response(list(h5_handle.keys()))]
+        try:
+            # LNMC-complient format containing data organization hierarchy
+            data_org_group = h5_handle["data_organization"]
+
+            cell_key = select_element(list(data_org_group.keys()), n=0)
+            cell_group = data_org_group[cell_key]
+
+            protocol_key = select_protocol(list(cell_group.keys()))
+            protocol_group = cell_group[protocol_key]
+
+            repetition_key = select_element(list(protocol_group.keys()), n=0, meta=MetaType.REPETITION)
+            repetition_group = protocol_group[repetition_key]
+
+            sweep_key = select_element(list(repetition_group.keys()), n=-3, meta=MetaType.SWEEP)
+            sweep_group = repetition_group[sweep_key]
+
+            response_key = select_response(list(sweep_group.keys()))
+            response_group = sweep_group[response_key]
+        except KeyError:
+            # Generic format
+            acquisition_group = h5_handle["acquisition"]
+
+            response_key = select_element(list(acquisition_group.keys()), n=-3)
+            response_group = acquisition_group[response_key]
 
         # Get relevant data, unit, rate, and conversion factor
-        unit = get_unit(h5_handle)
-        rate = get_rate(h5_handle)
-        conversion = get_conversion(h5_handle)
+        unit = get_unit(response_group)
+        rate = get_rate(response_group)
+        conversion = get_conversion(response_group)
 
         # Retrieve and process the data
-        data = np.array(h5_handle["data"][:]) * conversion
+        data = np.array(response_group["data"][:]) * conversion
 
         return EphysData(data=data, unit=unit, rate=rate)
 
