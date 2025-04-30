@@ -29,7 +29,7 @@ class EntityType(str, Enum):
     EXPERIMENTAL_SYNAPSES_PER_CONNECTION = "experimental-synapses-per-connection"
     MESH = "mesh"
     RECONSTRUCTION_MORPHOLOGY = "reconstruction-morphology"
-    SINGLE_CELL_EXPERIMENTAL_TRACE = "single-cell-experimental-trace"
+    ELECTRICAL_CELL_RECORDING = "electrical-cell-recording"
 
 
 class AssetStatus(str, Enum):

@@ -50,7 +50,7 @@ class EphysData:
 
 
 router = APIRouter(
-    prefix="/single-cell-experimental-trace",
+    prefix="/electrical-cell-recording",
 )
 require_bearer = HTTPBearer()
 
@@ -63,7 +63,7 @@ async def get_ephys_content(
     """Get the ephys file content from the entity core service."""
     async with get_entitycore_client() as core_client:
         download_url = await core_client.get_asset_download_url(
-            entity_type=EntityType.SINGLE_CELL_EXPERIMENTAL_TRACE,
+            entity_type=EntityType.ELECTRICAL_CELL_RECORDING,
             entity_id=entity_id,
             asset_id=asset_id,
             context=context,

@@ -1,7 +1,7 @@
 """
 Module: dependencies.py
 
-This module provides functions related to user authentication using JWT tokens and 
+This module provides functions related to user authentication using JWT tokens and
 handling user sessions.
 """
 
