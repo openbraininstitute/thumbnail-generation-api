@@ -71,7 +71,7 @@ async def get_ephys_content(
         return await core_client.get_asset_content(download_url)
 
 
-def extract_ephys_data(ephys_file: str) -> EphysData:
+def extract_ephys_data(ephys_file: bytes) -> EphysData:
     """Extract data from the ephys HDF5 file."""
     with h5py.File(io.BytesIO(ephys_file), "r") as h5_handle:
         h5_handle = h5_handle["data_organization"]
