@@ -77,12 +77,8 @@ def extract_ephys_data(ephys_file: str) -> EphysData:
         h5_handle = h5_handle["data_organization"]
         h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0)]
         h5_handle = h5_handle[select_protocol(list(h5_handle.keys()))]
-        h5_handle = h5_handle[
-            select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)
-        ]
-        h5_handle = h5_handle[
-            select_element(list(h5_handle.keys()), n=-3, meta=MetaType.SWEEP)
-        ]
+        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)]
+        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=-3, meta=MetaType.SWEEP)]
         h5_handle = h5_handle[select_response(list(h5_handle.keys()))]
 
         # Get relevant data, unit, rate, and conversion factor
