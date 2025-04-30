@@ -59,7 +59,7 @@ async def get_ephys_content(
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
     context: RequestContext = Depends(get_request_context),
-) -> str:
+) -> bytes:
     """Get the ephys file content from the entity core service."""
     async with get_entitycore_client() as core_client:
         download_url = await core_client.get_asset_download_url(

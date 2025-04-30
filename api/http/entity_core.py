@@ -217,25 +217,25 @@ class EntityCoreClient:
             return response.headers.get("location")
         raise ContentEmpty("Download url can not be extracted")
 
-    async def get_asset_content(self, url: str) -> str:
+    async def get_asset_content(self, url: str) -> bytes:
         """Get the content of an asset from its URL.
 
         Args:
             url: URL of the asset
 
         Returns:
-            Content of the asset as a string
+            Content of the asset as bytes
 
         Raises:
             ContentEmpty: If the content cannot be retrieved
         """
         response = await self._client.get(url)
         response.raise_for_status()
-        file_content = response.text
+        file_content = response.content
 
         if file_content is None:
             raise ContentEmpty()
-        return cast(str, file_content)
+        return cast(bytes, file_content)
 
 
 @asynccontextmanager
