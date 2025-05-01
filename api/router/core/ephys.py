@@ -59,7 +59,7 @@ async def get_ephys_content(
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
     context: RequestContext = Depends(get_request_context),
-) -> str:
+) -> bytes:
     """Get the ephys file content from the entity core service."""
     async with get_entitycore_client() as core_client:
         download_url = await core_client.get_asset_download_url(
@@ -71,7 +71,7 @@ async def get_ephys_content(
         return await core_client.get_asset_content(download_url)
 
 
-def extract_ephys_data(ephys_file: str) -> EphysData:
+def extract_ephys_data(ephys_file: bytes) -> EphysData:
     """Extract data from the ephys HDF5 file."""
     with h5py.File(io.BytesIO(ephys_file), "r") as h5_handle:
         h5_handle = h5_handle["data_organization"]
