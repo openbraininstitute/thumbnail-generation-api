@@ -172,7 +172,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         app.dependency_overrides[retrieve_user] = override_retrieve_user
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
+        "api.services.nexus.fetch_file_content",
         return_value=load_json_file("./tests/fixtures/data/simulation_config.json"),
     )
     def test_not_correct_target(self, fetch_file_content, mock_headers):
@@ -188,7 +188,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         assert response.headers["content-type"] == "application/json"
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
+        "api.services.nexus.fetch_file_content",
         return_value=load_json_file("./tests/fixtures/data/simulation_config.json"),
     )
     def test_stimulus(self, fetch_file_content, mock_headers):
@@ -204,7 +204,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         assert response.headers["content-type"] == "image/png"
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
+        "api.services.nexus.fetch_file_content",
         return_value=load_json_file("./tests/fixtures/data/simulation_config.json"),
     )
     def test_simulation(self, fetch_file_content, mock_headers):
@@ -219,7 +219,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         assert response.status_code == status.OK
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
+        "api.services.nexus.fetch_file_content",
         return_value=load_json_file(
             "./tests/fixtures/data/simulation_config.json", "stimulus"
         ),
@@ -237,7 +237,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         assert response.status_code == status.BAD_GATEWAY
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
+        "api.services.nexus.fetch_file_content",
         return_value=load_json_file(
             "./tests/fixtures/data/simulation_config.json", "simulation"
         ),

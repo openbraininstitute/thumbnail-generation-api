@@ -252,7 +252,7 @@ class EntityCoreClient:
         response = await self._client.get(url)
         response.raise_for_status()
 
-        if type is str:
+        if as_type == "str":
             file_content = response.text
         else:
             file_content = response.content
