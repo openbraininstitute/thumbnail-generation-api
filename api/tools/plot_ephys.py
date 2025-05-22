@@ -4,16 +4,14 @@ Module: trace_img.py
 This module exposes the business logic for generating trace thumbnails
 """
 
-from typing import Any, Union
+from typing import Any, Union, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
 
-def plot_nwb_ephys(
-    data: NDArray[Any], unit: str, rate: Union[int, float]
-) -> plt.FigureBase:
+def plot_nwb_ephys(data: NDArray[Any], unit: str, rate: Union[int, float]):
     """Plots traces"""
 
     def new_ticks(start, end, xory):
@@ -55,10 +53,10 @@ def plot_nwb_ephys(
     ax.tick_params(labelsize=fontsize)
     ax.plot(timestamps, data, color="black")
     ax.set_xlabel(xunit, fontsize=fontsize)
-    ax.set_ylabel(yrunit, fontsize=fontsize)
-    ax.xaxis.set_ticks(new_ticks(timestamps.min(), timestamps.max(), "x"))
+    ax.set_ylabel(cast(str, yrunit), fontsize=fontsize)
+    ax.xaxis.set_ticks(new_ticks(timestamps.min(), timestamps.max(), "x"))  # type:ignore TODO: Fix type
     ax.set_xticklabels([f"{label:2.0f}" for label in ax.get_xticks()])
-    ax.yaxis.set_ticks(new_ticks(min(data), max(data), "y"))
+    ax.yaxis.set_ticks(new_ticks(min(data), max(data), "y"))  # type:ignore TODO: Fix type
     ax.set_yticklabels([f"{label:2.0f}" for label in ax.get_yticks()])
 
     figure = fig.figure

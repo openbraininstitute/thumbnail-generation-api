@@ -9,7 +9,7 @@ import io
 import uuid
 from dataclasses import dataclass
 from http import HTTPStatus as status
-from typing import Optional
+from typing import Optional, cast
 
 import h5py
 import matplotlib.pyplot as plt
@@ -77,7 +77,9 @@ def extract_ephys_data(ephys_file: bytes) -> EphysData:
     with h5py.File(io.BytesIO(ephys_file), "r") as h5_handle:
         try:
             # LNMC-complient format containing data organization hierarchy
-            data_org_group = h5_handle["data_organization"]
+            data_org_group = cast(
+                dict, h5_handle["data_organization"]
+            )  # Todo define interface
 
             cell_key = select_element(list(data_org_group.keys()), n=0)
             cell_group = data_org_group[cell_key]
@@ -99,7 +101,9 @@ def extract_ephys_data(ephys_file: bytes) -> EphysData:
             response_group = sweep_group[response_key]
         except KeyError:
             # Generic format
-            acquisition_group = h5_handle["acquisition"]
+            acquisition_group = cast(
+                dict, h5_handle["acquisition"]
+            )  # Todo define interfaceƒ
 
             response_key = select_element(list(acquisition_group.keys()), n=-3)
             response_group = acquisition_group[response_key]
@@ -117,6 +121,7 @@ def extract_ephys_data(ephys_file: bytes) -> EphysData:
 
 def generate_plot(ephys_data: EphysData, dpi: Optional[int]) -> bytes:
     """Generate a plot from the ephys data."""
+    fig = None
     try:
         fig = plot_nwb_ephys(ephys_data.data, ephys_data.unit, ephys_data.rate)
         buffer = get_buffer(fig, dpi)
@@ -128,7 +133,8 @@ def generate_plot(ephys_data: EphysData, dpi: Optional[int]) -> bytes:
             http_status_code=status.BAD_REQUEST,
         ) from ex
     finally:
-        plt.close(fig)
+        if fig:
+            plt.close(fig)
 
 
 @router.get(

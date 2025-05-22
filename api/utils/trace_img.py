@@ -144,7 +144,7 @@ def get_unit(h5_handle: h5py.File) -> str:
         NoUnitFound: HTTPException if no unit is found
     """
     try:
-        return h5_handle["data"].attrs["unit"]
+        return h5_handle["data"].attrs["unit"]  # type: ignore TODO: Fix type
     except Exception as exc:
         raise NoUnitFound from exc
 
@@ -161,7 +161,7 @@ def get_rate(h5_handle: h5py.File) -> float:
         NoRateFound: HTTPException if no rate is found
     """
     try:
-        return float(h5_handle["starting_time"].attrs["rate"])
+        return float(h5_handle["starting_time"].attrs["rate"])  # type: ignore TODO: Fix type
     except Exception as exc:
         raise NoRateFound from exc
 
@@ -178,6 +178,6 @@ def get_conversion(h5_handle: h5py.File) -> float:
         NoConversionFound: HTTPException if no conversion is found
     """
     try:
-        return float(h5_handle["data"].attrs["conversion"])
+        return float(h5_handle["data"].attrs["conversion"])  # type: ignore TODO: Fix type
     except Exception as exc:
         raise NoConversionFound from exc

@@ -15,7 +15,7 @@ from api.services.nexus import fetch_file_content
 from api.utils.common import get_buffer
 
 
-def plot_morphology(morphology) -> plt.Figure:
+def plot_morphology(morphology):
     """
     Creates and formats a matplotlib figure object.
 

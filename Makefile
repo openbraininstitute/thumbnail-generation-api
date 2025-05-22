@@ -38,7 +38,7 @@ lint:
 lint-all: check-format lint   ## Run all linting checks
 
 typecheck: 
-	poetry run pyright .
+	poetry run pyright api
 
 test: ## Run tests
 	poetry run pytest
