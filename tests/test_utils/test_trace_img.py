@@ -16,7 +16,14 @@ from api.exceptions import (
     NoUnitFound,
 )
 from api.models.enums import MetaType
-from api.utils.trace_img import get_conversion, get_rate, get_unit, select_element, select_protocol, select_response
+from api.utils.trace_img import (
+    get_conversion,
+    get_rate,
+    get_unit,
+    select_element,
+    select_protocol,
+    select_response,
+)
 
 
 def test_select_element_returns_correct_element_if_correct_trace(trace_content):

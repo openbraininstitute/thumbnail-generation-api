@@ -41,7 +41,9 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num) -> plt.FigureBase:
         if xory == "x":
             stepsize = round((end - start) / 5 / 100) * 100
             xt = np.linspace(start, end, 6)
-            return np.concatenate((np.unique(np.round(xt[:-1] / 100) * 100), xt[-1]), axis=None)
+            return np.concatenate(
+                (np.unique(np.round(xt[:-1] / 100) * 100), xt[-1]), axis=None
+            )
 
         if xory == "y":
             stepsize = (end - start) / 4
@@ -71,9 +73,9 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num) -> plt.FigureBase:
     ax.set_xlabel(xunit, fontsize=fontsize)
     ax.set_ylabel(yrunit, fontsize=fontsize)
     ax.xaxis.set_ticks(new_ticks(timestamps.min(), timestamps.max(), "x"))
-    ax.set_xticklabels([f"{l:2.0f}" for l in ax.get_xticks()])
+    ax.set_xticklabels([f"{label:2.0f}" for label in ax.get_xticks()])
     ax.yaxis.set_ticks(new_ticks(min(data), max(data), "y"))
-    ax.set_yticklabels([f"{l:2.0f}" for l in ax.get_yticks()])
+    ax.set_yticklabels([f"{label:2.0f}" for label in ax.get_yticks()])
 
     figure = fig.figure
 
@@ -82,7 +84,9 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num) -> plt.FigureBase:
     return figure
 
 
-def generate_electrophysiology_image(access_token: str, content_url: str = "", dpi: Union[int, None] = 72) -> bytes:
+def generate_electrophysiology_image(
+    access_token: str, content_url: str = "", dpi: Union[int, None] = 72
+) -> bytes:
     """Creates and returns an electrophysiology trace image.
 
     Args:
@@ -94,15 +98,21 @@ def generate_electrophysiology_image(access_token: str, content_url: str = "", d
     Returns:
         bytes: The image in bytes format.
     """
-    content: bytes = fetch_file_content(access_token=access_token, content_url=content_url)
+    content: bytes = fetch_file_content(
+        access_token=access_token, content_url=content_url
+    )
 
     # Using context manager to handle the HDF5 file properly and ensure it is closed
     with h5py.File(io.BytesIO(content), "r") as h5_handle:
         h5_handle = h5_handle["data_organization"]
         h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0)]
         h5_handle = h5_handle[select_protocol(list(h5_handle.keys()))]
-        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)]
-        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=-3, meta=MetaType.SWEEP)]
+        h5_handle = h5_handle[
+            select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)
+        ]
+        h5_handle = h5_handle[
+            select_element(list(h5_handle.keys()), n=-3, meta=MetaType.SWEEP)
+        ]
         h5_handle = h5_handle[select_response(list(h5_handle.keys()))]
 
         # Get relevant data, unit, rate, and conversion factor

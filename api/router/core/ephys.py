@@ -59,11 +59,11 @@ async def get_ephys_content(
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
     context: RequestContext = Depends(get_request_context),
-) -> bytes:
+):
     """Get the ephys file content from the entity core service."""
     async with get_entitycore_client() as core_client:
         download_url = await core_client.get_asset_download_url(
-            entity_type=EntityType.ELECTRICAL_CELL_RECORDING,
+            entity_type=EntityType.electrical_cell_recording,
             entity_id=entity_id,
             asset_id=asset_id,
             context=context,
@@ -85,10 +85,14 @@ def extract_ephys_data(ephys_file: bytes) -> EphysData:
             protocol_key = select_protocol(list(cell_group.keys()))
             protocol_group = cell_group[protocol_key]
 
-            repetition_key = select_element(list(protocol_group.keys()), n=0, meta=MetaType.REPETITION)
+            repetition_key = select_element(
+                list(protocol_group.keys()), n=0, meta=MetaType.REPETITION
+            )
             repetition_group = protocol_group[repetition_key]
 
-            sweep_key = select_element(list(repetition_group.keys()), n=-3, meta=MetaType.SWEEP)
+            sweep_key = select_element(
+                list(repetition_group.keys()), n=-3, meta=MetaType.SWEEP
+            )
             sweep_group = repetition_group[sweep_key]
 
             response_key = select_response(list(sweep_group.keys()))

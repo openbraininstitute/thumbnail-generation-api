@@ -42,6 +42,8 @@ def retrieve_user(request: Request) -> User:
         decoded = jwt.decode(access_token, options={"verify_signature": False})
         if token_has_expired(decoded):
             raise ExpiredAccessToken
-        return User(username=decoded.get("preferred_username"), access_token=access_token)
+        return User(
+            username=decoded.get("preferred_username"), access_token=access_token
+        )
     except jwt.InvalidTokenError as inv_token_error:
         raise InvalidAccessToken from inv_token_error

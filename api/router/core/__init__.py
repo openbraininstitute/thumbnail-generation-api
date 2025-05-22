@@ -8,7 +8,6 @@ from fastapi import APIRouter
 
 from api.router.core.ephys import router as ephys_router
 from api.router.core.morphology import router as morphology_router
-from api.settings import settings
 
 core_router = APIRouter(prefix="/core")
 

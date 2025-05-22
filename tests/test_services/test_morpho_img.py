@@ -9,8 +9,13 @@ from api.services.morpho_img import generate_morphology_image
 from tests.utils import load_content
 
 
-@patch("api.services.morpho_img.fetch_file_content", return_value=load_content("./tests/fixtures/data/morphology.swc"))
-def test_generate_morphology_image_returns_correct_image(fetch_file_content, morphology_content_url, access_token):
+@patch(
+    "api.services.morpho_img.fetch_file_content",
+    return_value=load_content("./tests/fixtures/data/morphology.swc"),
+)
+def test_generate_morphology_image_returns_correct_image(
+    fetch_file_content, morphology_content_url, access_token
+):
     """
     Tests whether the generate morphology image() function returns correct image
     """
@@ -22,8 +27,13 @@ def test_generate_morphology_image_returns_correct_image(fetch_file_content, mor
     assert round(dpi[0]) == 72
 
 
-@patch("api.services.morpho_img.fetch_file_content", return_value=load_content("./tests/fixtures/data/morphology.swc"))
-def test_generate_morphology_image_returns_correct_dpi(fetch_file_content, morphology_content_url, access_token):
+@patch(
+    "api.services.morpho_img.fetch_file_content",
+    return_value=load_content("./tests/fixtures/data/morphology.swc"),
+)
+def test_generate_morphology_image_returns_correct_dpi(
+    fetch_file_content, morphology_content_url, access_token
+):
     """
     Tests whether the generate morphology image() function returns correct image
     """

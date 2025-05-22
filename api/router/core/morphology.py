@@ -61,7 +61,7 @@ async def get_morphology_preview(
     try:
         async with get_entitycore_client() as core_client:
             download_url = await core_client.get_asset_download_url(
-                entity_type=EntityType.RECONSTRUCTION_MORPHOLOGY,
+                entity_type=EntityType.reconstruction_morphology,
                 entity_id=entity_id,
                 asset_id=asset_id,
                 context=context,
@@ -70,7 +70,9 @@ async def get_morphology_preview(
             L.info(
                 f"download_url: {download_url}",
             )
-            morphology_file = await core_client.get_asset_content(download_url, as_type="str")
+            morphology_file = await core_client.get_asset_content(
+                download_url, as_type="str"
+            )
 
         # Load the morphology from the downloaded content
         morphology = nm.load_morphology(io.StringIO(morphology_file), reader="swc")

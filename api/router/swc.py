@@ -53,7 +53,10 @@ async def process_soma(
         meshes_directory.mkdir(exist_ok=True, parents=True)
 
         script_path = current_directory.parent.parent / "neuromorphovis.py"
-        blender_executable_path = current_directory.parent.parent / "blender/bbp-blender-3.5/blender-bbp/blender"
+        blender_executable_path = (
+            current_directory.parent.parent
+            / "blender/bbp-blender-3.5/blender-bbp/blender"
+        )
 
         logger.info("Running NMV script...")
         command = [
@@ -72,7 +75,10 @@ async def process_soma(
 
         target_name = Path(temp_file_path).stem
         for mesh_file in meshes_directory.iterdir():
-            if mesh_file.suffix == ".glb" and mesh_file.stem.replace("SOMA_MESH_", "") == target_name:
+            if (
+                mesh_file.suffix == ".glb"
+                and mesh_file.stem.replace("SOMA_MESH_", "") == target_name
+            ):
                 return FileResponse(
                     path=mesh_file,
                     media_type="model/gltf+json",
@@ -80,7 +86,9 @@ async def process_soma(
                 )
 
         logger.error("OBJ file not found after processing.")
-        raise HTTPException(status_code=404, detail="OBJ file not found after processing.")
+        raise HTTPException(
+            status_code=404, detail="OBJ file not found after processing."
+        )
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
