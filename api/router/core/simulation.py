@@ -23,9 +23,7 @@ from api.http.entity_core import (
 )
 from api.models.common import PlotTarget
 
-router = APIRouter(
-    prefix="/simulation",
-)
+router = APIRouter()
 require_bearer = HTTPBearer()
 
 
@@ -37,7 +35,7 @@ class SimulationType(StrEnum):
 
 
 @router.get(
-    "",
+    "/{simulation_type}/preview",
 )
 async def get_simulation_plot(
     entity_id: uuid.UUID,
