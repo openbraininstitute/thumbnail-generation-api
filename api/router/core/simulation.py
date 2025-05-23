@@ -9,6 +9,8 @@ from http import HTTPStatus as status
 from typing import Optional, cast, Literal
 from enum import StrEnum
 from api.services.simulation_img import generate_simulation_plots
+from api.exceptions import ContentEmpty
+from api.core.api import ApiError, ApiErrorCode
 
 
 from fastapi import APIRouter, Depends, Response, HTTPException
@@ -97,6 +99,13 @@ async def get_simulation_plot(
         raise HTTPException(
             status.BAD_GATEWAY, "Simulation config file is malformed"
         ) from exc
+    except ContentEmpty as ex:
+        L.error(f"ContentEmpty error while getting morphology preview: {ex}")
+        raise ApiError(
+            message=str(ex),
+            error_code=ApiErrorCode.ASSET_NOT_FOUND,
+            http_status_code=status.NOT_FOUND,
+        ) from ex
     except Exception as exc:
         raise HTTPException(
             status.INTERNAL_SERVER_ERROR, "Internal server error"
