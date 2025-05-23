@@ -13,7 +13,9 @@ from tests.utils import load_nwb_content
     "api.services.trace_img.fetch_file_content",
     return_value=load_nwb_content("./tests/fixtures/data/correct_trace.nwb"),
 )
-def test_generate_electrophysiology_image_returns_correct_image(fetch_file_content, trace_content_url, access_token):
+def test_generate_electrophysiology_image_returns_correct_image(
+    fetch_file_content, trace_content_url, access_token
+):
     """
     Tests whether the generate electrophysiology image() function returns correct image
     """
@@ -29,12 +31,16 @@ def test_generate_electrophysiology_image_returns_correct_image(fetch_file_conte
     "api.services.trace_img.fetch_file_content",
     return_value=load_nwb_content("./tests/fixtures/data/correct_trace.nwb"),
 )
-def test_generate_electrophysiology_image_returns_correct_image(fetch_file_content, trace_content_url, access_token):
+def test_generate_electrophysiology_image_returns_correct_image_300(
+    fetch_file_content, trace_content_url, access_token
+):
     """
     Tests whether the generate electrophysiology image() function returns correct image
     """
 
-    response = generate_electrophysiology_image(access_token, trace_content_url, dpi=300)
+    response = generate_electrophysiology_image(
+        access_token, trace_content_url, dpi=300
+    )
     assert isinstance(response, bytes)
     image = Image.open(BytesIO(response))
     dpi = image.info.get("dpi")

@@ -5,18 +5,26 @@ Testing Nexus-related services
 import pytest
 from unittest.mock import Mock, patch
 from api.services.nexus import fetch_file_content
-from api.exceptions import AuthenticationIssueException, AuthorizationIssueException, ResourceNotFoundException
+from api.exceptions import (
+    AuthenticationIssueException,
+    AuthorizationIssueException,
+    ResourceNotFoundException,
+)
 from tests.utils import load_content
 
 
 @patch("requests.get")
-def test_fetch_file_content_returns_data_if_request_is_200(mock_get, morphology_content_url, access_token):
+def test_fetch_file_content_returns_data_if_request_is_200(
+    mock_get, morphology_content_url, access_token
+):
     """
     Tests whether the content is correctly returned if the request is 200
     """
     mock_response = Mock()
     mock_response.status_code = 200
-    mock_response.json.return_value = load_content("./tests/fixtures/data/morphology.swc", encoded=False)
+    mock_response.json.return_value = load_content(
+        "./tests/fixtures/data/morphology.swc", encoded=False
+    )
     mock_get.return_value = mock_response
 
     fetch_file_content(access_token, morphology_content_url)

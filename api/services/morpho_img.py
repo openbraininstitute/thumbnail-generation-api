@@ -15,7 +15,7 @@ from api.services.nexus import fetch_file_content
 from api.utils.common import get_buffer
 
 
-def plot_morphology(morphology) -> plt.Figure:
+def plot_morphology(morphology):
     """
     Creates and formats a matplotlib figure object.
 
@@ -43,7 +43,9 @@ def plot_morphology(morphology) -> plt.Figure:
     return fig
 
 
-def generate_morphology_image(access_token: str, content_url: str = "", dpi: Union[int, None] = 72) -> bytes:
+def generate_morphology_image(
+    access_token: str, content_url: str = "", dpi: Union[int, None] = 72
+) -> bytes:
     """
     Returns a PNG image of a morphology (by generating a matplotlib figure from its SWC distribution).
 

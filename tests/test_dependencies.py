@@ -39,7 +39,12 @@ class TestRetrieveUser:
         """
         valid_token = "valid_token"
         monkeypatch.setattr(
-            jwt, "decode", lambda token, options: {"preferred_username": "user123", "exp": time.time() + 10000}
+            jwt,
+            "decode",
+            lambda token, options: {
+                "preferred_username": "user123",
+                "exp": time.time() + 10000,
+            },
         )
 
         request = MockRequest(headers={"authorization": f"Bearer {valid_token}"})

@@ -10,6 +10,8 @@ class UpperStrEnum(str, Enum):
     """
 
     @staticmethod
-    def _generate_next_value_(name: str, start: int, count: int, last_values: list[str]) -> str:  # noqa: ARG004
+    def _generate_next_value_(
+        name: str, start: int, count: int, last_values: list[str]
+    ) -> str:  # noqa: ARG004
         """Return the upper-cased version of the member name."""
         return name.upper()

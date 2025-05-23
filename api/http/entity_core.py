@@ -8,7 +8,7 @@ handling asset management and retrieval operations for assets.
 import uuid
 from contextlib import asynccontextmanager
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Union, cast, overload
+from typing import Any, Dict, List, Literal, Optional, Union, overload
 from urllib.parse import urljoin
 
 import httpx
@@ -18,18 +18,26 @@ from pydantic import BaseModel
 
 from api.exceptions import ContentEmpty
 from api.settings import settings
+from enum import StrEnum, auto
 
 
-class EntityType(str, Enum):
+class EntityType(StrEnum):
     """Entity types supported in the API."""
 
-    EMODEL = "emodel"
-    EXPERIMENTAL_BOUTON_DENSITY = "experimental-bouton-density"
-    EXPERIMENTAL_NEURON_DENSITY = "experimental-neuron-density"
-    EXPERIMENTAL_SYNAPSES_PER_CONNECTION = "experimental-synapses-per-connection"
-    MESH = "mesh"
-    RECONSTRUCTION_MORPHOLOGY = "reconstruction-morphology"
-    ELECTRICAL_CELL_RECORDING = "electrical-cell-recording"
+    @staticmethod
+    def _generate_next_value_(name, start, count, last_values) -> str:
+        return name.replace("_", "-")
+
+    emodel = auto()
+    experimental_bouton_density = auto()
+    experimental_neuron_density = auto()
+    experimental_synapses_per_connection = auto()
+    mesh = auto()
+    reconstruction_morphology = auto()
+    electrical_cell_recording = auto()
+    single_neuron_simulation = auto()
+    single_neuron_synaptome = auto()
+    single_neuron_synaptome_simulation = auto()
 
 
 class AssetStatus(str, Enum):
@@ -205,7 +213,7 @@ class EntityCoreClient:
         Raises:
             ContentEmpty: If the download URL cannot be extracted
         """
-        url = self._build_url(f"{entity_type.value}/{entity_id}/assets/{asset_id}/download")
+        url = self._build_url(f"{entity_type}/{entity_id}/assets/{asset_id}/download")
 
         response = await self._client.get(
             url,
@@ -226,7 +234,9 @@ class EntityCoreClient:
     @overload
     async def get_asset_content(self, url: str) -> bytes: ...
 
-    async def get_asset_content(self, url: str, as_type: Literal["bytes", "str"] = "bytes") -> Union[bytes, str]:
+    async def get_asset_content(
+        self, url: str, as_type: Literal["bytes", "str"] = "bytes"
+    ) -> Union[bytes, str]:
         """Get the content of an asset from its URL.
 
         Args:
@@ -250,7 +260,7 @@ class EntityCoreClient:
         if not file_content:
             raise ContentEmpty()
 
-        return cast(Union[bytes, str], file_content)
+        return file_content
 
 
 @asynccontextmanager
@@ -282,9 +292,9 @@ async def get_entitycore_client_dependency() -> EntityCoreClient:
 # Define a dependency to extract authorization and context from request headers
 async def get_request_context(
     request: Request,
-    virtual_lab_id: Optional[str] = Header(None),
-    project_id: Optional[str] = Header(None),
-) -> Dict[str, Optional[str]]:
+    virtual_lab_id: Optional[uuid.UUID] = Header(None),
+    project_id: Optional[uuid.UUID] = Header(None),
+):
     """Get the context from the request headers.
 
     Args:

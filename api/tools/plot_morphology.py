@@ -6,11 +6,10 @@ Module: plot_morphology.py
 This module provides functionality for plotting neuronal morphology data using matplotlib.
 """
 
-import matplotlib.pyplot as plt
 from neurom.view import matplotlib_impl, matplotlib_utils
 
 
-def plot_morphology(morphology) -> plt.Figure:
+def plot_morphology(morphology):
     """
     Creates and formats a matplotlib figure object.
 

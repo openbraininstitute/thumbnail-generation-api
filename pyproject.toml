@@ -29,10 +29,8 @@ kaleido = "0.2.1"
 loguru = { version = "^0.7.3", python = ">=3.10,<4.0" }
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.8.0"
-pylint = "^3.0.2"
-ruff = "^0.6.1"
-mypy = "^1.8.0"
+ruff = "^0.11"
+pyright = "^1.1.401"
 
 [build-system]
 requires = ["poetry-core"]

@@ -14,7 +14,7 @@ services:
     environment:
       - entity_core_uri=http://host.docker.internal:8000
       - PYTHONUNBUFFERED=1
-      - ENVIRONMENT=production
+      - ENVIRONMENT=development
     networks:
       - app-network
     restart: unless-stopped

@@ -38,9 +38,12 @@ class TestMorphologyThumbnailGenerationRouter:
         app.dependency_overrides[retrieve_user] = override_retrieve_user
 
     @patch(
-        "api.services.morpho_img.fetch_file_content", return_value=load_content("./tests/fixtures/data/morphology.swc")
+        "api.services.morpho_img.fetch_file_content",
+        return_value=load_content("./tests/fixtures/data/morphology.swc"),
     )
-    def test_morphology_thumbnail_generation_returns_200_and_image(self, fetch_file_content, mock_headers):
+    def test_morphology_thumbnail_generation_returns_200_and_image(
+        self, fetch_file_content, mock_headers
+    ):
         """
         Tests whether the router returns a 200 and an image if the request is correct
         """
@@ -53,7 +56,9 @@ class TestMorphologyThumbnailGenerationRouter:
         assert response.headers["content-type"] == "image/png"
 
     @patch("requests.get")
-    def test_morphology_thumbnail_generation_returns_404_if_resource_not_exists(self, mock_get, mock_headers):
+    def test_morphology_thumbnail_generation_returns_404_if_resource_not_exists(
+        self, mock_get, mock_headers
+    ):
         """
         Tests whether the router returns a 404 and correct error message if resource does not exist
         """
@@ -70,7 +75,9 @@ class TestMorphologyThumbnailGenerationRouter:
         assert response.json()["detail"] == "The resource is not found"
 
     @patch("requests.get")
-    def test_morphology_thumbnail_generation_returns_422_if_content_url_is_wrong(self, mock_get, mock_headers):
+    def test_morphology_thumbnail_generation_returns_422_if_content_url_is_wrong(
+        self, mock_get, mock_headers
+    ):
         """
         Tests whether the router returns a 422 and correct error message if content url is wrong
         """
@@ -101,7 +108,9 @@ class TestElectrophusiologyThumbnailGenerationRouter:
         "api.services.trace_img.fetch_file_content",
         return_value=load_nwb_content("./tests/fixtures/data/correct_trace.nwb"),
     )
-    def test_electrophysiology_thumbnail_generation_returns_200_and_image(self, fetch_file_content, mock_headers):
+    def test_electrophysiology_thumbnail_generation_returns_200_and_image(
+        self, fetch_file_content, mock_headers
+    ):
         """
         Tests whether the router returns a 200 and an image if the request is correct
         """
@@ -114,7 +123,9 @@ class TestElectrophusiologyThumbnailGenerationRouter:
         assert response.headers["content-type"] == "image/png"
 
     @patch("requests.get")
-    def test_electrophysiology_thumbnail_generation_returns_404_if_resource_not_exists(self, mock_get, mock_headers):
+    def test_electrophysiology_thumbnail_generation_returns_404_if_resource_not_exists(
+        self, mock_get, mock_headers
+    ):
         """
         Tests whether the router returns a 404 and correct error message if resource does not exist
         """
@@ -131,7 +142,9 @@ class TestElectrophusiologyThumbnailGenerationRouter:
         assert response.json()["detail"] == "The resource is not found"
 
     @patch("requests.get")
-    def test_electrophysiology_thumbnail_generation_returns_422_if_content_url_is_wrong(self, mock_get, mock_headers):
+    def test_electrophysiology_thumbnail_generation_returns_422_if_content_url_is_wrong(
+        self, mock_get, mock_headers
+    ):
         """
         Tests whether the router returns a 422 and correct error message if content url is wrong
         """
@@ -159,7 +172,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         app.dependency_overrides[retrieve_user] = override_retrieve_user
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
+        "api.router.generate.fetch_file_content",
         return_value=load_json_file("./tests/fixtures/data/simulation_config.json"),
     )
     def test_not_correct_target(self, fetch_file_content, mock_headers):
@@ -175,7 +188,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         assert response.headers["content-type"] == "application/json"
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
+        "api.router.generate.fetch_file_content",
         return_value=load_json_file("./tests/fixtures/data/simulation_config.json"),
     )
     def test_stimulus(self, fetch_file_content, mock_headers):
@@ -191,7 +204,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         assert response.headers["content-type"] == "image/png"
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
+        "api.router.generate.fetch_file_content",
         return_value=load_json_file("./tests/fixtures/data/simulation_config.json"),
     )
     def test_simulation(self, fetch_file_content, mock_headers):
@@ -206,8 +219,10 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         assert response.status_code == status.OK
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
-        return_value=load_json_file("./tests/fixtures/data/simulation_config.json", "stimulus"),
+        "api.router.generate.fetch_file_content",
+        return_value=load_json_file(
+            "./tests/fixtures/data/simulation_config.json", "stimulus"
+        ),
     )
     def test_stimulus_not_in_config(self, fetch_file_content, mock_headers):
         """
@@ -222,8 +237,10 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
         assert response.status_code == status.BAD_GATEWAY
 
     @patch(
-        "api.services.simulation_img.fetch_file_content",
-        return_value=load_json_file("./tests/fixtures/data/simulation_config.json", "simulation"),
+        "api.router.generate.fetch_file_content",
+        return_value=load_json_file(
+            "./tests/fixtures/data/simulation_config.json", "simulation"
+        ),
     )
     def test_stimulation_not_in_config(self, fetch_file_content, mock_headers):
         """

@@ -37,11 +37,13 @@ def retrieve_user(request: Request) -> User:
     :return: User object containing username and access token.
     :raises HTTPException: Thrown with a 401 status code if the access token is invalid or has expired.
     """
-    access_token = request.headers.get("authorization").replace("Bearer ", "")
+    access_token = request.headers.get("authorization", "").replace("Bearer ", "")
     try:
         decoded = jwt.decode(access_token, options={"verify_signature": False})
         if token_has_expired(decoded):
             raise ExpiredAccessToken
-        return User(username=decoded.get("preferred_username"), access_token=access_token)
+        return User(
+            username=decoded.get("preferred_username"), access_token=access_token
+        )
     except jwt.InvalidTokenError as inv_token_error:
         raise InvalidAccessToken from inv_token_error

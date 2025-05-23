@@ -23,13 +23,22 @@ dev:  ## Run development server
 	@$(call load_env,local)
 	poetry run uvicorn api.main:app --reload --port 8003
 
-format: ## Format code using black
-	poetry run black . 
-	
-check-format: ## Check code formatting without making changes
-	poetry run black --check .
+format: ## Format code using ruff
+	poetry run ruff format . 
 
-lint: check-format lint-pylint   ## Run all linting checks
+check-format: ## Check code formatting without making changes
+	poetry run ruff format --check .
+
+lint-fix:
+	poetry run ruff check --fix .
+	
+lint:
+	poetry run ruff check .
+
+lint-all: check-format lint   ## Run all linting checks
+
+typecheck: 
+	poetry run pyright api
 
 test: ## Run tests
 	poetry run pytest
