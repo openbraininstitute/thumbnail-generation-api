@@ -35,7 +35,7 @@ lint-fix:
 lint:
 	poetry run ruff check .
 
-lint-all: check-format lint   ## Run all linting checks
+lint-all: check-format lint typecheck ## Run all linting checks
 
 typecheck: 
 	poetry run pyright api
