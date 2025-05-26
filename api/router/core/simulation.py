@@ -13,15 +13,15 @@ from api.exceptions import ContentEmpty
 from api.core.api import ApiError, ApiErrorCode
 
 
-from fastapi import APIRouter, Depends, Response, HTTPException
+from fastapi import APIRouter, Response, HTTPException
 from fastapi.security import HTTPBearer
 from loguru import logger as L
 
 from api.http.entity_core import (
     EntityType,
-    RequestContext,
+    ProjectContextDep,
+    AuthDep,
     get_entitycore_client,
-    get_request_context,
 )
 from api.models.common import PlotTarget
 
@@ -47,9 +47,10 @@ async def get_simulation_plot(
         EntityType.single_neuron_synaptome_simulation,
     ],
     target: PlotTarget,
+    context: ProjectContextDep,
+    auth: AuthDep,
     w: Optional[int] = None,
     h: Optional[int] = None,
-    context: RequestContext = Depends(get_request_context),
 ) -> Response:
     """
     Generate a preview of a simulation
@@ -69,11 +70,14 @@ async def get_simulation_plot(
 
     try:
         async with get_entitycore_client() as core_client:
+            L.info(f"{context}")
+
             download_url = await core_client.get_asset_download_url(
                 entity_type=cast(EntityType, simulation_type),
                 entity_id=entity_id,
                 asset_id=asset_id,
                 context=context,
+                token=auth,
             )
 
             L.info(

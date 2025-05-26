@@ -8,11 +8,12 @@ handling asset management and retrieval operations for assets.
 import uuid
 from contextlib import asynccontextmanager
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Union, overload
+from typing import Any, Dict, List, Literal, Optional, Union, overload, Annotated
 from urllib.parse import urljoin
 
 import httpx
-from fastapi import Header, Request
+from fastapi import Header, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from loguru import logger as L
 from pydantic import BaseModel
 
@@ -47,10 +48,9 @@ class AssetStatus(str, Enum):
     DELETED = "DELETED"
 
 
-class RequestContext(BaseModel):
+class ProjectContext(BaseModel):
     """Request context containing authentication and identification information."""
 
-    auth_token: Optional[str] = None
     virtual_lab_id: Optional[uuid.UUID] = None
     project_id: Optional[uuid.UUID] = None
 
@@ -90,6 +90,10 @@ class ListResponse(BaseModel):
     pagination: PaginationResponse
 
 
+ProjectContextDep = Annotated[ProjectContext, Header()]
+AuthDep = Annotated[HTTPAuthorizationCredentials, Depends(HTTPBearer(auto_error=False))]
+
+
 class EntityCoreClient:
     """Client for interacting with asset endpoints."""
 
@@ -115,7 +119,9 @@ class EntityCoreClient:
         """Close the httpx client session."""
         await self._client.aclose()
 
-    def _get_headers(self, context: RequestContext) -> Dict[str, str]:
+    def _get_headers(
+        self, context: ProjectContext, token: HTTPAuthorizationCredentials
+    ) -> Dict[str, str]:
         """Get headers for the request.
 
         Args:
@@ -126,8 +132,8 @@ class EntityCoreClient:
         """
         headers = {"Accept": "application/json"}
 
-        if context.auth_token:
-            headers["Authorization"] = f"Bearer {context.auth_token}"
+        if token:
+            headers["Authorization"] = f"Bearer {token.credentials}"
 
         if context.virtual_lab_id:
             headers["virtual-lab-id"] = str(context.virtual_lab_id)
@@ -144,7 +150,8 @@ class EntityCoreClient:
         self,
         entity_type: EntityType,
         entity_id: uuid.UUID,
-        context: RequestContext,
+        context: ProjectContext,
+        token: HTTPAuthorizationCredentials,
     ) -> ListResponse:
         """Get all assets for an entity.
 
@@ -160,7 +167,7 @@ class EntityCoreClient:
 
         response = await self._client.get(
             url,
-            headers=self._get_headers(context),
+            headers=self._get_headers(context, token),
         )
         response.raise_for_status()
         return ListResponse.model_validate(response.json())
@@ -170,7 +177,8 @@ class EntityCoreClient:
         entity_type: EntityType,
         entity_id: uuid.UUID,
         asset_id: uuid.UUID,
-        context: RequestContext,
+        context: ProjectContext,
+        token: HTTPAuthorizationCredentials,
     ) -> AssetRead:
         """Get a specific asset for an entity.
 
@@ -187,7 +195,7 @@ class EntityCoreClient:
 
         response = await self._client.get(
             url,
-            headers=self._get_headers(context),
+            headers=self._get_headers(context, token),
         )
         response.raise_for_status()
         return AssetRead.model_validate(response.json())
@@ -197,7 +205,8 @@ class EntityCoreClient:
         entity_type: EntityType,
         entity_id: uuid.UUID,
         asset_id: uuid.UUID,
-        context: RequestContext,
+        context: ProjectContext,
+        token: HTTPAuthorizationCredentials,
     ) -> str:
         """Get a download URL for an asset.
 
@@ -217,7 +226,7 @@ class EntityCoreClient:
 
         response = await self._client.get(
             url,
-            headers=self._get_headers(context),
+            headers=self._get_headers(context, token),
             follow_redirects=False,
         )
 
@@ -287,29 +296,3 @@ async def get_entitycore_client_dependency() -> EntityCoreClient:
         base_url=settings.entity_core_uri,
     )
     return client
-
-
-# Define a dependency to extract authorization and context from request headers
-async def get_request_context(
-    request: Request,
-    virtual_lab_id: Optional[uuid.UUID] = Header(None),
-    project_id: Optional[uuid.UUID] = Header(None),
-):
-    """Get the context from the request headers.
-
-    Args:
-        request: The FastAPI request object
-        virtual_lab_id: Optional virtual lab ID from header
-        project_id: Optional project ID from header
-
-    Returns:
-        Dictionary containing auth_token, virtual_lab_id, and project_id
-    """
-    auth_header = request.headers.get("Authorization", "")
-    auth_token = auth_header.replace("Bearer ", "") if auth_header else None
-
-    return RequestContext(
-        auth_token=auth_token,
-        virtual_lab_id=virtual_lab_id,
-        project_id=project_id,
-    )

@@ -7,13 +7,15 @@ This module defines a FastAPI application for a Thumbnail Generation API.
 from contextlib import asynccontextmanager
 
 import sentry_sdk
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
 from api.router import generate, health, swc
 from api.router.core import core_router
 from api.settings import settings
+from api.core.api import ApiError
 
 tags_metadata = [
     {
@@ -70,6 +72,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(ApiError)
+async def my_custom_exception_handler(request: Request, exc: ApiError):
+    return JSONResponse(
+        status_code=ApiError.http_status_code,
+        content={"detail": exc.message},
+    )
+
 
 # ASGI middleware to capture incoming HTTP request
 app.add_middleware(SentryAsgiMiddleware)

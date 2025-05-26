@@ -7,7 +7,7 @@ packages = [{ include = "api" }]
 
 [tool.poetry.dependencies]
 python = ">=3.10"
-fastapi = { version = "^0.112.1", extras = ["standard"] }
+fastapi = "^0.115"
 gunicorn = "^23.0.0"
 uvicorn = "^0.30.6"
 PyJWT = "^2.8.0"

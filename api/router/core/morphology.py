@@ -21,9 +21,9 @@ from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import ContentEmpty
 from api.http.entity_core import (
     EntityType,
-    RequestContext,
+    ProjectContextDep,
+    AuthDep,
     get_entitycore_client,
-    get_request_context,
 )
 from api.tools.plot_morphology import plot_morphology
 from api.utils.common import get_buffer
@@ -42,8 +42,9 @@ require_bearer = HTTPBearer()
 async def get_morphology_preview(
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
+    context: ProjectContextDep,
+    auth: AuthDep,
     dpi: Optional[int] = Query(None, ge=10, le=600),
-    context: RequestContext = Depends(get_request_context),
 ) -> Response:
     """
     Generate a preview of a morphology
@@ -65,6 +66,7 @@ async def get_morphology_preview(
                 entity_id=entity_id,
                 asset_id=asset_id,
                 context=context,
+                token=auth,
             )
 
             L.info(

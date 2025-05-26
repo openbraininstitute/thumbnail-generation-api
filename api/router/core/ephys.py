@@ -23,9 +23,11 @@ from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import ContentEmpty
 from api.http.entity_core import (
     EntityType,
-    RequestContext,
+    ProjectContextDep,
+    ProjectContext,
+    HTTPAuthorizationCredentials,
+    AuthDep,
     get_entitycore_client,
-    get_request_context,
 )
 from api.models.enums import MetaType
 from api.tools.plot_ephys import plot_nwb_ephys
@@ -58,7 +60,8 @@ require_bearer = HTTPBearer()
 async def get_ephys_content(
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
-    context: RequestContext = Depends(get_request_context),
+    context: ProjectContext,
+    token: HTTPAuthorizationCredentials,
 ):
     """Get the ephys file content from the entity core service."""
     async with get_entitycore_client() as core_client:
@@ -67,6 +70,7 @@ async def get_ephys_content(
             entity_id=entity_id,
             asset_id=asset_id,
             context=context,
+            token=token,
         )
         return await core_client.get_asset_content(download_url)
 
@@ -145,8 +149,9 @@ def generate_plot(ephys_data: EphysData, dpi: Optional[int]) -> bytes:
 async def get_ephys_preview(
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
+    context: ProjectContextDep,
+    auth: AuthDep,
     dpi: Optional[int] = Query(None, ge=10, le=600),
-    context: RequestContext = Depends(get_request_context),
 ) -> Response:
     """
     Generate a preview of an ephys trace.
@@ -162,7 +167,7 @@ async def get_ephys_preview(
     """
     try:
         # Get the ephys file content
-        ephys_file = await get_ephys_content(entity_id, asset_id, context)
+        ephys_file = await get_ephys_content(entity_id, asset_id, context, auth)
 
         # Extract data from the file
         ephys_data = extract_ephys_data(ephys_file)
