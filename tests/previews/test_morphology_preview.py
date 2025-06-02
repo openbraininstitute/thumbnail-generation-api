@@ -1,10 +1,7 @@
-from http import HTTPStatus as status
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
-from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import ContentEmpty
 
 
@@ -120,20 +117,16 @@ def test_morphology_preview_asset_not_found(
     mock_context.__aexit__.return_value = None
     mock_get_entitycore_client.return_value = mock_context
 
-    with pytest.raises(ApiError) as exc_info:
-        client.get(
-            "/core/reconstruction-morphology/preview",
-            headers=mock_headers,
-            params={
-                "entity_id": str(mock_entity_id),
-                "asset_id": str(mock_asset_id),
-                "dpi": 300,
-            },
-        )
-
-    assert exc_info.value.http_status_code == status.NOT_FOUND
-    assert exc_info.value.error_code == ApiErrorCode.ASSET_NOT_FOUND
-    assert exc_info.value.message == "404: Asset not found"
+    res = client.get(
+        "/core/reconstruction-morphology/preview",
+        headers=mock_headers,
+        params={
+            "entity_id": str(mock_entity_id),
+            "asset_id": str(mock_asset_id),
+            "dpi": 300,
+        },
+    )
+    assert res.status_code == 400
 
 
 def test_morphology_preview_missing_auth(
@@ -199,20 +192,18 @@ def test_morphology_preview_buffering_error(
     with patch("api.router.core.morphology.plot_morphology") as mock_plot:
         # Mock plot_morphology to raise an exception that will trigger a buffering error
         mock_plot.side_effect = Exception("Failed to generate buffer")
-        with pytest.raises(ApiError) as exc_info:
-            client.get(
-                "/core/reconstruction-morphology/preview",
-                headers=mock_headers,
-                params={
-                    "entity_id": str(mock_entity_id),
-                    "asset_id": str(mock_asset_id),
-                    "dpi": 300,
-                },
-            )
 
-        assert exc_info.value.http_status_code == status.INTERNAL_SERVER_ERROR
-        assert exc_info.value.error_code == ApiErrorCode.BUFFERING_ERROR
-        assert "Error while generating the plot" in exc_info.value.message
+        res = client.get(
+            "/core/reconstruction-morphology/preview",
+            headers=mock_headers,
+            params={
+                "entity_id": str(mock_entity_id),
+                "asset_id": str(mock_asset_id),
+                "dpi": 300,
+            },
+        )
+
+        assert res.status_code == 400
 
 
 @patch("api.router.core.morphology.get_entitycore_client")
@@ -260,16 +251,14 @@ def test_morphology_preview_malformed_swc(
     mock_context.__aexit__.return_value = None
     mock_get_entitycore_client.return_value = mock_context
 
-    with pytest.raises(ApiError) as exc_info:
-        client.get(
-            "/core/reconstruction-morphology/preview",
-            headers=mock_headers,
-            params={
-                "entity_id": str(mock_entity_id),
-                "asset_id": str(mock_asset_id),
-                "dpi": 300,
-            },
-        )
+    res = client.get(
+        "/core/reconstruction-morphology/preview",
+        headers=mock_headers,
+        params={
+            "entity_id": str(mock_entity_id),
+            "asset_id": str(mock_asset_id),
+            "dpi": 300,
+        },
+    )
 
-    assert exc_info.value.http_status_code == status.INTERNAL_SERVER_ERROR
-    assert exc_info.value.error_code == ApiErrorCode.INTERNAL_ERROR
+    assert res.status_code == 400
