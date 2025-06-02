@@ -32,10 +32,14 @@ def fetch_file_content(access_token: str, content_url: str = "") -> bytes:
     """
     parsed_content_url = urlparse(content_url)
 
-    if not all([parsed_content_url.scheme, parsed_content_url.netloc, parsed_content_url.path]):
+    if not all(
+        [parsed_content_url.scheme, parsed_content_url.netloc, parsed_content_url.path]
+    ):
         raise InvalidUrlParameterException
 
-    response = requests.get(content_url, headers={"authorization": f"Bearer {access_token}"}, timeout=15)
+    response = requests.get(
+        content_url, headers={"authorization": f"Bearer {access_token}"}, timeout=15
+    )
 
     if response.status_code == 200:
         return response.content

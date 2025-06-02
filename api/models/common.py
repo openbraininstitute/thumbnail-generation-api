@@ -41,7 +41,7 @@ class PlotData(BaseModel):
     name: str
 
 
-class SimulationConfigurationFile(BaseModel):
+class SimulationConfiguration(BaseModel):
     """
     Configuration file content for simulation
     """

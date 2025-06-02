@@ -18,6 +18,7 @@ from api.models.common import (
     SimulationGenerationInput,
 )
 from api.user import User
+from api.services.nexus import fetch_file_content
 
 
 router = APIRouter()
@@ -53,7 +54,9 @@ def get_morphology_image(
     responses={404: {"model": ErrorMessage}},
     response_model=None,
 )
-def get_trace_image(image_input: ImageGenerationInput = Depends(), user: User = Depends(retrieve_user)) -> Response:
+def get_trace_image(
+    image_input: ImageGenerationInput = Depends(), user: User = Depends(retrieve_user)
+) -> Response:
     """
     Endpoint to get a preview image of an electrophysiology trace
     Sample Content URL:
@@ -74,21 +77,36 @@ def get_trace_image(image_input: ImageGenerationInput = Depends(), user: User = 
     responses={404: {"model": ErrorMessage}},
     response_model=None,
 )
-def get_simulation_plot(config: SimulationGenerationInput = Depends(), user: User = Depends(retrieve_user)) -> Response:
+def get_simulation_plot(
+    config: SimulationGenerationInput = Depends(), user: User = Depends(retrieve_user)
+) -> Response:
     """
     Endpoint to get a preview image of an simulation plots
     Sample Content URL:
     https://sbo-nexus-delta.shapes-registry.org/v1/files/cad43d74-f697-48d6-9242-28cb6b4a4956/f9b265b2-22c3-4a92-9ad5-79dff37e39ca/https%3A%2F%2Fopenbrainplatform.org%2Fdata%2Fcad43d74-f697-48d6-9242-28cb6b4a4956%2Ff9b265b2-22c3-4a92-9ad5-79dff37e39ca%2Feadf0aa4-109c-4422-806c-325e5669565a?rev=1
     """
+
+    response = fetch_file_content(user.access_token, config.content_url).decode(
+        encoding="utf-8"
+    )
+
     try:
         image = generate_simulation_plots(
-            access_token=user.access_token,
-            config=config,
+            config_file_content=response,
+            w=config.w,
+            h=config.h,
+            target=config.target,
         )
         if image is None:
-            raise HTTPException(status_code=status.NOT_FOUND, detail="Simulation results data not found")
+            raise HTTPException(
+                status_code=status.NOT_FOUND, detail="Simulation results data not found"
+            )
         return Response(image, media_type="image/png")
     except ValueError as exc:
-        raise HTTPException(status.BAD_GATEWAY, "Simulation config file is malformed") from exc
+        raise HTTPException(
+            status.BAD_GATEWAY, "Simulation config file is malformed"
+        ) from exc
     except Exception as exc:
-        raise HTTPException(status.INTERNAL_SERVER_ERROR, "Internal server error") from exc
+        raise HTTPException(
+            status.INTERNAL_SERVER_ERROR, "Internal server error"
+        ) from exc

@@ -5,12 +5,17 @@ This module defines a FastAPI application for a Thumbnail Generation API.
 """
 
 from contextlib import asynccontextmanager
+
 import sentry_sdk
-from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from api.router import generate, swc, health
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+
+from api.router import generate, health, swc
+from api.router.core import core_router
 from api.settings import settings
+from api.core.api import ApiError
 
 tags_metadata = [
     {
@@ -62,16 +67,26 @@ base_router = APIRouter(prefix=settings.base_path)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(settings.whitelisted_cors_urls.split(",")),
+    allow_origins=settings.whitelisted_cors_urls or [],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
+@app.exception_handler(ApiError)
+async def my_custom_exception_handler(request: Request, exc: ApiError):
+    return JSONResponse(
+        status_code=ApiError.http_status_code,
+        content={"detail": exc.message},
+    )
+
+
 # ASGI middleware to capture incoming HTTP request
 app.add_middleware(SentryAsgiMiddleware)
 
 # Include routers
+base_router.include_router(core_router, tags=["Core"])
 base_router.include_router(generate.router, prefix="/generate", tags=["Generate"])
 base_router.include_router(swc.router, prefix="/soma", tags=["Soma"])
 base_router.include_router(health.router, tags=["Health"])

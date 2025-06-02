@@ -4,8 +4,8 @@ Module: exceptions.py
 This module defines a custom exception classes
 """
 
-from fastapi import HTTPException
 import sentry_sdk
+from fastapi import HTTPException
 
 
 class SentryReportedException(HTTPException):
@@ -46,7 +46,9 @@ class AuthorizationIssueException(HTTPException):
     """Exception raised when Nexus throws authorization error"""
 
     def __init__(self):
-        super().__init__(status_code=403, detail="The user does not have access in the content")
+        super().__init__(
+            status_code=403, detail="The user does not have access in the content"
+        )
 
 
 # Nexus
@@ -71,7 +73,9 @@ class InvalidUrlParameterException(HTTPException):
     """
 
     def __init__(self) -> None:
-        super().__init__(status_code=422, detail="Invalid content_url parameter in request")
+        super().__init__(
+            status_code=422, detail="Invalid content_url parameter in request"
+        )
 
 
 # Electrophysiology
@@ -88,46 +92,67 @@ class NoRepetitionFound(SentryReportedException):
     "Thrown when no repetition is found."
 
     def __init__(self):
-        super().__init__(status_code=404, detail="The NWB file didn't contain a 'repetition'")
+        super().__init__(
+            status_code=404, detail="The NWB file didn't contain a 'repetition'"
+        )
 
 
 class NoSweepFound(SentryReportedException):
     "Thrown when no sweep is found."
 
     def __init__(self):
-        super().__init__(status_code=404, detail="The NWB file didn't contain a 'sweep'")
+        super().__init__(
+            status_code=404, detail="The NWB file didn't contain a 'sweep'"
+        )
 
 
 class NoProtocolFound(SentryReportedException):
     "Thrown when no protocol is found."
 
     def __init__(self):
-        super().__init__(status_code=404, detail="The NWB file didn't contain a 'protocol'")
+        super().__init__(
+            status_code=404, detail="The NWB file didn't contain a 'protocol'"
+        )
 
 
 class NoResponseFound(SentryReportedException):
     "Thrown when no Response data is found."
 
     def __init__(self):
-        super().__init__(status_code=404, detail="The NWB file didn't contain any Response data.")
+        super().__init__(
+            status_code=404, detail="The NWB file didn't contain any Response data."
+        )
 
 
 class NoUnitFound(SentryReportedException):
     "Thrown when no unit is found."
 
     def __init__(self):
-        super().__init__(status_code=404, detail="The NWB file didn't contain a 'unit'.")
+        super().__init__(
+            status_code=404, detail="The NWB file didn't contain a 'unit'."
+        )
 
 
 class NoRateFound(SentryReportedException):
     "Thrown when no rate is found."
 
     def __init__(self):
-        super().__init__(status_code=404, detail="The NWB file didn't contain a 'rate'.")
+        super().__init__(
+            status_code=404, detail="The NWB file didn't contain a 'rate'."
+        )
 
 
 class NoConversionFound(SentryReportedException):
     "Thrown when no conversion is found."
 
     def __init__(self):
-        super().__init__(status_code=404, detail="The NWB file didn't contain a 'conversion'.")
+        super().__init__(
+            status_code=404, detail="The NWB file didn't contain a 'conversion'."
+        )
+
+
+class ContentEmpty(SentryReportedException):
+    "Thrown when file content is empty."
+
+    def __init__(self, msg: str | None = "The file has no content"):
+        super().__init__(status_code=404, detail=msg)

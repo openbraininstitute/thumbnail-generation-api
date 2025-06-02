@@ -1,9 +1,9 @@
 from typing import Union
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import io
 
 
-def get_buffer(fig: plt.FigureBase, dpi: Union[int, None]) -> io.BytesIO:
+def get_buffer(fig: Figure, dpi: Union[int, None]) -> io.BytesIO:
     """
     Creates a file buffer from a FigureBase object.
 

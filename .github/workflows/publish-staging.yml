@@ -1,0 +1,34 @@
+name: publish-staging
+
+on:
+    push:
+      branches:
+        - develop
+    workflow_dispatch:
+  
+jobs:
+  publish-to-aws-ecr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.PUBLICECR_UPLOAD_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PUBLICECR_UPLOAD_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.PUBLICECR_REGION }}
+
+      - name: Authenticate with AWS Public ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Build
+        run: |
+          docker build -t ${{ vars.PUBLICECR_URI }}:staging .
+
+      - name: Publish To AWS ECR
+        run: |
+          docker push ${{ vars.PUBLICECR_URI }}:staging
