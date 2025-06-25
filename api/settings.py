@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 0.2
     sentry_profiles_sample_rate: float = 0.05
-    entity_core_uri: str = "http://localhost:8000"
+    entity_core_uri: str = "https://staging.openbraininstitute.org/api/entitycore"
 
     @property
     def debug_mode(self) -> bool:

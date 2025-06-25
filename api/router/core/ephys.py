@@ -22,11 +22,11 @@ from numpy.typing import NDArray
 from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import ContentEmpty
 from api.http.entity_core import (
-    EntityType,
-    ProjectContextDep,
-    ProjectContext,
-    HTTPAuthorizationCredentials,
     AuthDep,
+    EntityType,
+    HTTPAuthorizationCredentials,
+    ProjectContext,
+    ProjectContextDep,
     get_entitycore_client,
 )
 from api.models.enums import MetaType
@@ -147,10 +147,10 @@ def generate_plot(ephys_data: EphysData, dpi: Optional[int]) -> bytes:
     response_model=None,
 )
 async def get_ephys_preview(
-    entity_id: uuid.UUID,
-    asset_id: uuid.UUID,
     context: ProjectContextDep,
     auth: AuthDep,
+    entity_id: uuid.UUID,
+    asset_id: uuid.UUID,
     dpi: Optional[int] = Query(None, ge=10, le=600),
 ) -> Response:
     """

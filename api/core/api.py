@@ -13,9 +13,11 @@ class ApiErrorCode(UpperStrEnum):
 
     GENERIC_ERROR = auto()
     ASSET_NOT_FOUND = auto()
+    CONTENT_EMPTY = auto()
     REMOTE_ASSET_NOT_FOUND = auto()
     BUFFERING_ERROR = auto()
     INTERNAL_ERROR = auto()
+    VALIDATION_RESULT_NOT_FOUND = auto()
 
 
 @dataclasses.dataclass(kw_only=True)

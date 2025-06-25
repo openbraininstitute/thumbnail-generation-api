@@ -156,3 +156,17 @@ class ContentEmpty(SentryReportedException):
 
     def __init__(self, msg: str | None = "The file has no content"):
         super().__init__(status_code=404, detail=msg)
+
+
+class AssetNotFound(SentryReportedException):
+    "Thrown when asset is not found."
+
+    def __init__(self, msg: str | None = "The asset is not found"):
+        super().__init__(status_code=404, detail=msg)
+
+
+class ValidationResultNotFound(SentryReportedException):
+    "Thrown when validation result is not found."
+
+    def __init__(self, msg: str | None = "The validation result is not found"):
+        super().__init__(status_code=404, detail=msg)

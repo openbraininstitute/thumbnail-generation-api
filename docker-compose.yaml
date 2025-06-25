@@ -12,7 +12,7 @@ services:
     volumes:
       - ./output:/app/output
     environment:
-      - entity_core_uri=http://host.docker.internal:8000
+      - entity_core_uri=https://staging.openbraininstitute.org/api/entitycore
       - PYTHONUNBUFFERED=1
       - ENVIRONMENT=development
     networks:
