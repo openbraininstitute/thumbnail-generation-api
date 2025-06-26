@@ -4,12 +4,14 @@ Unit test module related to the router of /generate
 
 from http import HTTPStatus as status
 from unittest.mock import Mock, patch
-from fastapi.testclient import TestClient
+
 import pytest
-from api.main import app
+from fastapi.testclient import TestClient
+
 from api.dependencies import retrieve_user
-from tests.utils import load_content, load_json_file, load_nwb_content
+from api.main import app
 from api.user import User
+from tests.utils import load_content, load_json_file, load_nwb_content
 
 
 def override_retrieve_user():
@@ -72,7 +74,10 @@ class TestMorphologyThumbnailGenerationRouter:
             params={"content_url": "http://example.com/image", "dpi": 300},
         )
         assert response.status_code == 404
-        assert response.json()["detail"] == "The resource is not found"
+        assert response.json()["detail"] == {
+            "code": "EntityNotFoundException",
+            "message": "Entity not found",
+        }
 
     @patch("requests.get")
     def test_morphology_thumbnail_generation_returns_422_if_content_url_is_wrong(
@@ -91,7 +96,10 @@ class TestMorphologyThumbnailGenerationRouter:
             params={"content_url": "notAurl/image", "dpi": 300},
         )
         assert response.status_code == 422
-        assert response.json()["detail"] == "Invalid content_url parameter in request"
+        assert response.json()["detail"] == {
+            "code": "InvalidUrlParameterException",
+            "message": "Invalid content_url parameter in request",
+        }
 
 
 class TestElectrophusiologyThumbnailGenerationRouter:
@@ -139,7 +147,10 @@ class TestElectrophusiologyThumbnailGenerationRouter:
             params={"content_url": "http://example.com/image", "dpi": 300},
         )
         assert response.status_code == 404
-        assert response.json()["detail"] == "The resource is not found"
+        assert response.json()["detail"] == {
+            "code": "EntityNotFoundException",
+            "message": "Entity not found",
+        }
 
     @patch("requests.get")
     def test_electrophysiology_thumbnail_generation_returns_422_if_content_url_is_wrong(
@@ -158,7 +169,10 @@ class TestElectrophusiologyThumbnailGenerationRouter:
             params={"content_url": "notAurl/image", "dpi": 300},
         )
         assert response.status_code == 422
-        assert response.json()["detail"] == "Invalid content_url parameter in request"
+        assert response.json()["detail"] == {
+            "code": "InvalidUrlParameterException",
+            "message": "Invalid content_url parameter in request",
+        }
 
 
 class TestSingleNeuronSimulationThumbnailGenerationRouter:

@@ -94,21 +94,24 @@ async def get_model_trace_preview(
             f"ValidationResultNotFound error while getting model trace preview: {ex}"
         )
         raise ApiError(
-            message=str(ex),
+            message=ex.detail.get("message") or "Validation result not found",
+            details=ex,
             error_code=ApiErrorCode.VALIDATION_RESULT_NOT_FOUND,
             http_status_code=status.NOT_FOUND,
         ) from ex
     except AssetNotFound as ex:
         L.error(f"AssetNotFound error while getting model trace preview: {ex}")
         raise ApiError(
-            message=str(ex),
+            message=ex.detail.get("message") or "Asset not found",
+            details=ex,
             error_code=ApiErrorCode.ASSET_NOT_FOUND,
             http_status_code=status.NOT_FOUND,
         ) from ex
     except ContentEmpty as ex:
         L.error(f"ContentEmpty error while getting model trace preview: {ex}")
         raise ApiError(
-            message=str(ex),
+            message=ex.detail.get("message") or "Content empty",
+            details=ex,
             error_code=ApiErrorCode.CONTENT_EMPTY,
             http_status_code=status.NOT_FOUND,
         ) from ex
@@ -116,7 +119,8 @@ async def get_model_trace_preview(
         L.error(f"Server error while getting model trace preview: {ex}")
         L.exception(ex)
         raise ApiError(
-            message=str(ex),
+            message="Internal server error",
+            details=str(ex),
             error_code=ApiErrorCode.INTERNAL_ERROR,
             http_status_code=status.INTERNAL_SERVER_ERROR,
         ) from ex
