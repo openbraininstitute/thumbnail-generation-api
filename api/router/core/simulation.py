@@ -5,25 +5,24 @@ This module provides functionality for generating simulation plot previews
 """
 
 import uuid
-from http import HTTPStatus as status
-from typing import Optional, cast, Literal
 from enum import StrEnum
-from api.services.simulation_img import generate_simulation_plots
-from api.exceptions import ContentEmpty
-from api.core.api import ApiError, ApiErrorCode
+from http import HTTPStatus as status
+from typing import Literal, Optional, cast
 
-
-from fastapi import APIRouter, Response, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from fastapi.security import HTTPBearer
 from loguru import logger as L
 
+from api.core.api import ApiError, ApiErrorCode
+from api.exceptions import ContentEmpty
 from api.http.entity_core import (
+    AuthDep,
     EntityType,
     ProjectContextDep,
-    AuthDep,
     get_entitycore_client,
 )
 from api.models.common import PlotTarget
+from api.services.simulation_img import generate_simulation_plots
 
 router = APIRouter()
 require_bearer = HTTPBearer()
@@ -106,7 +105,8 @@ async def get_simulation_plot(
     except ContentEmpty as ex:
         L.error(f"ContentEmpty error while getting morphology preview: {ex}")
         raise ApiError(
-            message=str(ex),
+            message=ex.detail.get("message") or "Content is not available",
+            details=ex,
             error_code=ApiErrorCode.ASSET_NOT_FOUND,
             http_status_code=status.NOT_FOUND,
         ) from ex

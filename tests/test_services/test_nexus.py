@@ -2,14 +2,16 @@
 Testing Nexus-related services
 """
 
-import pytest
 from unittest.mock import Mock, patch
-from api.services.nexus import fetch_file_content
+
+import pytest
+
 from api.exceptions import (
     AuthenticationIssueException,
     AuthorizationIssueException,
-    ResourceNotFoundException,
+    EntityNotFoundException,
 )
+from api.services.nexus import fetch_file_content
 from tests.utils import load_content
 
 
@@ -41,7 +43,7 @@ def test_fetch_file_content_raises_exception_if_content_url_does_not_exist(
     mock_response.status_code = 404
     mock_response.json.return_value = None
     mock_get.return_value = mock_response
-    with pytest.raises(ResourceNotFoundException):
+    with pytest.raises(EntityNotFoundException):
         fetch_file_content(access_token, morphology_content_url)
 
 

@@ -8,14 +8,14 @@ from contextlib import asynccontextmanager
 
 import sentry_sdk
 from fastapi import APIRouter, FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
+from api.core.api import ApiError
 from api.router import generate, health, swc
 from api.router.core import core_router
 from api.settings import settings
-from api.core.api import ApiError
 
 tags_metadata = [
     {
@@ -76,9 +76,13 @@ app.add_middleware(
 
 @app.exception_handler(ApiError)
 async def my_custom_exception_handler(request: Request, exc: ApiError):
+    print("–– – main.py:81 – exc:", exc)
     return JSONResponse(
         status_code=ApiError.http_status_code,
-        content={"detail": exc.message},
+        content={
+            "message": exc.message,
+            "code": exc.error_code,
+        },
     )
 
 
