@@ -7,19 +7,19 @@ handling asset management and retrieval operations for assets.
 
 import uuid
 from contextlib import asynccontextmanager
-from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Union, overload, Annotated
+from datetime import datetime
+from enum import Enum, StrEnum, auto
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union, overload
 from urllib.parse import urljoin
 
 import httpx
-from fastapi import Header, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, Header
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from loguru import logger as L
 from pydantic import BaseModel
 
 from api.exceptions import ContentEmpty
 from api.settings import settings
-from enum import StrEnum, auto
 
 
 class EntityType(StrEnum):
@@ -39,6 +39,7 @@ class EntityType(StrEnum):
     single_neuron_simulation = auto()
     single_neuron_synaptome = auto()
     single_neuron_synaptome_simulation = auto()
+    validation_result = auto()
 
 
 class AssetStatus(str, Enum):
@@ -60,7 +61,7 @@ class AssetBase(BaseModel):
 
     path: str
     full_path: str
-    bucket_name: str
+    # bucket_name: str
     is_directory: bool
     content_type: str
     size: int
@@ -72,7 +73,19 @@ class AssetRead(AssetBase):
     """Asset model for responses."""
 
     id: uuid.UUID
-    status: AssetStatus
+    status: str
+
+
+class ValidationResult(BaseModel):
+    id: uuid.UUID
+    name: str
+    passed: bool
+    validated_entity_id: uuid.UUID
+    creation_date: datetime
+    update_date: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class PaginationResponse(BaseModel):
@@ -83,10 +96,10 @@ class PaginationResponse(BaseModel):
     total_items: int
 
 
-class ListResponse(BaseModel):
+class ListResponse[T](BaseModel):
     """List response with pagination."""
 
-    data: List[AssetRead]
+    data: List[T]
     pagination: PaginationResponse
 
 
@@ -170,7 +183,11 @@ class EntityCoreClient:
             headers=self._get_headers(context, token),
         )
         response.raise_for_status()
-        return ListResponse.model_validate(response.json())
+        parsed = response.json()
+        return ListResponse[AssetRead](
+            data=[AssetRead.model_validate(item) for item in parsed["data"]],
+            pagination=PaginationResponse.model_validate(parsed["pagination"]),
+        )
 
     async def get_entity_asset(
         self,
@@ -270,6 +287,30 @@ class EntityCoreClient:
             raise ContentEmpty()
 
         return file_content
+
+    async def get_validation_results(
+        self,
+        *,
+        name: str,
+        validated_entity_id: uuid.UUID,
+        context: ProjectContext,
+        token: HTTPAuthorizationCredentials,
+    ):
+        url = self._build_url("validation-result")
+
+        response = await self._client.get(
+            url,
+            headers=self._get_headers(context, token),
+            params={"name": name, "validated_entity_id": str(validated_entity_id)},
+            follow_redirects=False,
+        )
+        response.raise_for_status()
+
+        parsed = response.json()
+        return ListResponse[ValidationResult](
+            data=[ValidationResult.model_validate(item) for item in parsed["data"]],
+            pagination=PaginationResponse.model_validate(parsed["pagination"]),
+        )
 
 
 @asynccontextmanager

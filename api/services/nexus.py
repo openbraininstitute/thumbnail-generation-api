@@ -3,12 +3,14 @@ Nexus service to expose business logic of interacting with Nexus
 """
 
 from urllib.parse import urlparse
+
 import requests
+
 from api.exceptions import (
     AuthenticationIssueException,
     AuthorizationIssueException,
+    EntityNotFoundException,
     InvalidUrlParameterException,
-    ResourceNotFoundException,
 )
 
 
@@ -44,7 +46,7 @@ def fetch_file_content(access_token: str, content_url: str = "") -> bytes:
     if response.status_code == 200:
         return response.content
     if response.status_code == 404:
-        raise ResourceNotFoundException
+        raise EntityNotFoundException
     if response.status_code == 401:
         raise AuthenticationIssueException
     if response.status_code == 403:

@@ -6,20 +6,21 @@ It includes an endpoint to get a preview image of a morphology.
 """
 
 from http import HTTPStatus as status
+
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import HTTPBearer
-from api.services.trace_img import generate_electrophysiology_image
-from api.services.morpho_img import generate_morphology_image
-from api.services.simulation_img import generate_simulation_plots
+
 from api.dependencies import retrieve_user
 from api.models.common import (
     ErrorMessage,
     ImageGenerationInput,
     SimulationGenerationInput,
 )
-from api.user import User
+from api.services.morpho_img import generate_morphology_image
 from api.services.nexus import fetch_file_content
-
+from api.services.simulation_img import generate_simulation_plots
+from api.services.trace_img import generate_electrophysiology_image
+from api.user import User
 
 router = APIRouter()
 require_bearer = HTTPBearer()

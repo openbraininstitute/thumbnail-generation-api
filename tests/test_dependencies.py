@@ -3,11 +3,13 @@ Testing the dependencies module
 """
 
 import time
+
 import jwt
 import pytest
+
 from api.dependencies import retrieve_user
-from api.user import User
 from api.exceptions import InvalidAccessToken
+from api.user import User
 
 
 class TestRetrieveUser:
@@ -69,7 +71,10 @@ class TestRetrieveUser:
             retrieve_user(request)
 
         assert exc_info.value.status_code == 401
-        assert exc_info.value.detail == "Access token is invalid"
+        assert exc_info.value.detail == {
+            "code": "InvalidAccessToken",
+            "message": "Access token invalid",
+        }
 
 
 # Mock Request object for testing

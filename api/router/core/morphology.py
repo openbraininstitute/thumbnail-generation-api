@@ -20,9 +20,9 @@ from loguru import logger as L
 from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import ContentEmpty
 from api.http.entity_core import (
+    AuthDep,
     EntityType,
     ProjectContextDep,
-    AuthDep,
     get_entitycore_client,
 )
 from api.tools.plot_morphology import plot_morphology
@@ -81,7 +81,8 @@ async def get_morphology_preview(
     except ContentEmpty as ex:
         L.error(f"ContentEmpty error while getting morphology preview: {ex}")
         raise ApiError(
-            message=str(ex),
+            message=ex.detail.get("message") or "Content is not available",
+            details=ex,
             error_code=ApiErrorCode.ASSET_NOT_FOUND,
             http_status_code=status.NOT_FOUND,
         ) from ex
@@ -89,7 +90,8 @@ async def get_morphology_preview(
         L.error(f"Server error while getting morphology preview: {ex}")
         L.exception(ex)
         raise ApiError(
-            message=str(ex),
+            message="Morphology preview generation failed",
+            details=ex,
             error_code=ApiErrorCode.INTERNAL_ERROR,
             http_status_code=status.INTERNAL_SERVER_ERROR,
         ) from ex
@@ -105,7 +107,8 @@ async def get_morphology_preview(
         return Response(image_bytes, media_type="image/png")
     except Exception as ex:
         raise ApiError(
-            message=f"Error while generating the plot: {ex}",
+            message="Morphology preview generation failed",
+            details=ex,
             error_code=ApiErrorCode.BUFFERING_ERROR,
             http_status_code=status.INTERNAL_SERVER_ERROR,
         ) from ex

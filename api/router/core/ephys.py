@@ -22,11 +22,11 @@ from numpy.typing import NDArray
 from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import ContentEmpty
 from api.http.entity_core import (
-    EntityType,
-    ProjectContextDep,
-    ProjectContext,
-    HTTPAuthorizationCredentials,
     AuthDep,
+    EntityType,
+    HTTPAuthorizationCredentials,
+    ProjectContext,
+    ProjectContextDep,
     get_entitycore_client,
 )
 from api.models.enums import MetaType
@@ -132,7 +132,8 @@ def generate_plot(ephys_data: EphysData, dpi: Optional[int]) -> bytes:
         return buffer.getvalue()
     except Exception as ex:
         raise ApiError(
-            message=f"Error while converting asset to buffer: {ex}",
+            message="Error while converting asset to buffer",
+            details=ex,
             error_code=ApiErrorCode.BUFFERING_ERROR,
             http_status_code=status.BAD_REQUEST,
         ) from ex
@@ -147,10 +148,10 @@ def generate_plot(ephys_data: EphysData, dpi: Optional[int]) -> bytes:
     response_model=None,
 )
 async def get_ephys_preview(
-    entity_id: uuid.UUID,
-    asset_id: uuid.UUID,
     context: ProjectContextDep,
     auth: AuthDep,
+    entity_id: uuid.UUID,
+    asset_id: uuid.UUID,
     dpi: Optional[int] = Query(None, ge=10, le=600),
 ) -> Response:
     """
@@ -179,14 +180,16 @@ async def get_ephys_preview(
     except ContentEmpty as ex:
         L.error(f"ContentEmpty error while getting ephys preview: {ex}")
         raise ApiError(
-            message=str(ex),
+            message="Error while getting ephys preview",
+            details=ex,
             error_code=ApiErrorCode.ASSET_NOT_FOUND,
             http_status_code=status.NOT_FOUND,
         ) from ex
     except Exception as ex:
         L.error(f"Server error while getting ephys preview: {ex}")
         raise ApiError(
-            message=str(ex),
+            message="Error while getting ephys preview",
+            details=ex,
             error_code=ApiErrorCode.INTERNAL_ERROR,
             http_status_code=status.INTERNAL_SERVER_ERROR,
         ) from ex
