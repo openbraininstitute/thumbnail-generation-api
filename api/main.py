@@ -76,7 +76,6 @@ app.add_middleware(
 
 @app.exception_handler(ApiError)
 async def my_custom_exception_handler(request: Request, exc: ApiError):
-    print("–– – main.py:81 – exc:", exc)
     return JSONResponse(
         status_code=ApiError.http_status_code,
         content={
