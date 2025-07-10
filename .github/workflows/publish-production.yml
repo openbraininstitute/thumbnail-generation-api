@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-  
+
 jobs:
   publish-to-aws-ecr:
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
       - name: Create Git Tag
         run: |
           git tag $NEW_TAG
-          git push origin $NEW_TAG    
+          git push origin $NEW_TAG
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

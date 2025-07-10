@@ -15,6 +15,8 @@ services:
       - entity_core_uri=https://staging.openbraininstitute.org/api/entitycore
       - PYTHONUNBUFFERED=1
       - ENVIRONMENT=development
+    env_file:
+      - .env.local
     networks:
       - app-network
     restart: unless-stopped

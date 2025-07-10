@@ -51,7 +51,7 @@ build:
 up:  ## Run the application in Docker
 	mkdir -p output
 	docker compose --progress=plain build thumbnail-api
-	docker compose --env-file ./.env.local -f docker-compose.yaml up --remove-orphans
+	docker compose -f docker-compose.yaml up --remove-orphans
 
 destroy:  ## Take down the application and remove the volumes
 	docker compose down --remove-orphans --volumes
