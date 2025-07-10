@@ -24,32 +24,34 @@ dev:  ## Run development server
 	poetry run uvicorn api.main:app --reload --port 8003
 
 format: ## Format code using ruff
-	poetry run ruff format . 
+	poetry run ruff format .
 
 check-format: ## Check code formatting without making changes
 	poetry run ruff format --check .
 
 lint-fix:
 	poetry run ruff check --fix .
-	
+
 lint:
 	poetry run ruff check .
 
 lint-all: check-format lint typecheck ## Run all linting checks
 
-typecheck: 
+typecheck:
 	poetry run pyright api
 
 test: ## Run tests
 	poetry run pytest
-	
+
 ci: format lint test ## Run all CI checks (linting and tests)
-	
+
 build:
 	docker build --platform linux/amd64 -t thumbnail-api .
 
 up:  ## Run the application in Docker
-	docker compose --env-file ./.env.local -f docker-compose.yaml up --watch --remove-orphans
+	mkdir -p output
+	docker compose --progress=plain build thumbnail-api
+	docker compose --env-file ./.env.local -f docker-compose.yaml up --remove-orphans
 
 destroy:  ## Take down the application and remove the volumes
 	docker compose down --remove-orphans --volumes

@@ -20,7 +20,7 @@ RUN apt-get update && \
   libxkbcommon0 \
   git \
   vim \
-  supervisor \ 
+  supervisor \
   nginx \
   jq \
   htop \
@@ -30,7 +30,7 @@ RUN apt-get update && \
   psmisc \
   procps \
   libxml2-dev \
-  libxslt1-dev \ 
+  libxslt1-dev \
   python3-libxml2 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
@@ -62,15 +62,13 @@ COPY ./nmv/options/neuromorphovis_options.py /app/nmv/options/
 #soma_reconstruction.py has export to glb patched in
 COPY ./nmv/interface/cli/soma_reconstruction.py /app/interface/cli/
 
-COPY ./nginx/ /etc/nginx/
-COPY ./supervisord.conf /etc/supervisor/supervisord.conf
-
 COPY pyproject.toml /app/
 
 RUN pip install poetry
 RUN poetry install --without dev --no-interaction --no-ansi --no-root
 
-
+COPY ./nginx/ /etc/nginx/
+COPY ./supervisord.conf /etc/supervisor/supervisord.conf
 COPY . /app
 
 EXPOSE 80
