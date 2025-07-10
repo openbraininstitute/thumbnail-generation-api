@@ -29,7 +29,7 @@ to our [GitHub Repository][github]. Even better, you can [submit a Pull Request]
 #  Missing a Feature?
 
 You can *request* a new feature by [submitting an issue](#issues) to our GitHub Repository.
-If you would like to *implement* a new feature, please submit an issue with a proposal for your 
+If you would like to *implement* a new feature, please submit an issue with a proposal for your
 work first, to be sure that we can use it.
 
 Please consider what kind of change it is:
@@ -58,7 +58,7 @@ When you wish to contribute to the code base, please consider the following guid
 * Make your changes in your fork, in a new git branch:
 
      ```shell
-     git checkout -b my-fix-branch master
+     git checkout -b my-fix-branch develop
      ```
 * Create your patch, **including appropriate Python test cases**.
   Please check the coding [conventions](#coding-conventions) for more information.
@@ -73,14 +73,14 @@ When you wish to contribute to the code base, please consider the following guid
     ```shell
     git push origin my-fix-branch
     ```
-* In GitHub, send a Pull Request to the `master` branch of the upstream repository of the relevant component.
+* In GitHub, send a Pull Request to the `develop` branch of the upstream repository of the relevant component.
 * If we suggest changes then:
   * Make the required updates.
   * Re-run the test suites to ensure tests are still passing.
   * Rebase your branch and force push to your GitHub repository (this will update your Pull Request):
 
        ```shell
-        git rebase master -i
+        git rebase develop -i
         git push -f
        ```
 
@@ -96,20 +96,20 @@ the main (upstream) repository:
     ```shell
     git push origin --delete my-fix-branch
     ```
-* Check out the master branch:
+* Check out the develop branch:
 
     ```shell
-    git checkout master -f
+    git checkout develop -f
     ```
 * Delete the local branch:
 
     ```shell
     git branch -D my-fix-branch
     ```
-* Update your master with the latest upstream version:
+* Update your develop with the latest upstream version:
 
     ```shell
-    git pull --ff upstream master
+    git pull --ff upstream develop
     ```
 
 [github]: https://github.com/BlueBrain/thumbnail-generation-api
@@ -123,23 +123,22 @@ This section applies to both Python versions 2 and 3.
 
 ## Setup
 
-It is recommended to use `virtualenv` to develop in a sandbox environment:
+It is recommended to use uv to develop in a sandbox environment:
 
 ```
-pipx install poetry
-poetry install
+make install
 ```
-
-## Build
-
-Run the following command to build incrementally the project: `poetry build`
 
 ## Test
 
-Run the following command to run the Python unit-tests: `pytest`
+Run the following command to run the Python unit-tests:
+
+```
+make test
+```
 
 ## Coding conventions
 
 The code coverage of the Python unit-tests may not decrease over time.
 It means that every change must go with their corresponding Python unit-tests to
-validate the library behavior as well as to demonstrate the API usage. 
+validate the library behavior as well as to demonstrate the API usage.

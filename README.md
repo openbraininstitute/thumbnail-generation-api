@@ -14,7 +14,7 @@ To get started with the Thumbnail Generation API, follow these simple steps:
     cd thumbnail-generation-api
     ```
 
-2. **Install [Poetry](https://python-poetry.org/docs/)**
+2. **Install [uv](https://docs.astral.sh/uv/)**
 
 3. **Install the dependencies:**
     ```sh
