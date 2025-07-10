@@ -5,7 +5,7 @@ version = "0.0.0"
 authors = [{ name = "Blue Brain Project, EPFL" }]
 readme = "README.md"
 license = {text = "Apache-2.0"}
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
     "gunicorn>=23.0.0",
