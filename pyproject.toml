@@ -33,6 +33,7 @@ dev = [
     "ruff>=0.11",
     "pyright>=1.1.401",
     "pytest>=8.3.2",
+    "pytest-cov>=6.2.1",
 ]
 
 [tool.ruff]
@@ -95,3 +96,31 @@ combine-as-imports = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-vv",
+    "-ra",
+    "--cov=api",
+    "--durations=10",
+    "--durations-min=0.1",
+]
+# asyncio_mode = "auto"
+testpaths = [
+    "tests",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = false
+source_pkgs = [
+    "api",
+]
+
+[tool.coverage.report]
+show_missing = true
+precision = 0
+fail_under = 70
+omit = [
+]
