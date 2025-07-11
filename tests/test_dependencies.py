@@ -39,7 +39,7 @@ class TestRetrieveUser:
         This test case mocks a valid token using monkeypatch and ensures that the retrieve_user
         function returns the expected User object with correct attributes.
         """
-        valid_token = "valid_token"
+        valid_token = "valid_token"  # noqa: S105
         monkeypatch.setattr(
             jwt,
             "decode",
@@ -64,7 +64,7 @@ class TestRetrieveUser:
         This test case mocks an invalid token using monkeypatch and ensures that the retrieve_user
         function raises an HTTPException with a 401 status code and the correct detail message.
         """
-        invalid_token = "invalid_token"
+        invalid_token = "invalid_token"  # noqa: S105
 
         request = MockRequest(headers={"authorization": f"Bearer {invalid_token}"})
         with pytest.raises(InvalidAccessToken) as exc_info:

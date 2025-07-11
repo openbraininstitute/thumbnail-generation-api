@@ -4,15 +4,15 @@ Module: simulation_img.py
 This module exposes the business logic for generating simulation thumbnails
 """
 
-from typing import List
 import io
 import json
+
 import plotly.graph_objects as go
 
 from api.models.common import (
     PlotData,
-    SimulationConfiguration,
     PlotTarget,
+    SimulationConfiguration,
 )
 
 
@@ -26,7 +26,8 @@ def generate_simulation_plots(
     Creates plotly figure with data and layout
 
     Parameters:
-        - config: configuration object contains the content_url, dimension of the image and plot target
+        - config: configuration object contains the content_url, dimension of the image
+            and plot target
     Returns:
         The simulation figure
     """
@@ -36,7 +37,7 @@ def generate_simulation_plots(
     except Exception as exc:
         raise ValueError("Configuration file is malformed") from exc
 
-    data: List[PlotData] = []
+    data: list[PlotData] = []
 
     if target == "stimulus":
         stimulus_config = simulation_config.stimulus
@@ -50,9 +51,7 @@ def generate_simulation_plots(
 
     if len(data) > 0:
         fig = go.Figure(
-            data=[
-                {"x": pd.x, "y": pd.y, "type": pd.type, "name": pd.name} for pd in data
-            ],
+            data=[{"x": pd.x, "y": pd.y, "type": pd.type, "name": pd.name} for pd in data],
             layout={
                 "showlegend": False,
                 "margin": {"t": 4, "r": 4, "l": 4, "b": 4},

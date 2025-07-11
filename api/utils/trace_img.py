@@ -3,27 +3,26 @@ trace_img utils module exposes useful utilities related to the generation of tra
 """
 
 import re
+
 import h5py
 import numpy as np
-from typing import List
-from typing import Union
+
 from api.exceptions import (
+    NoCellFound,
     NoConversionFound,
-    NoResponseFound,
     NoProtocolFound,
     NoRateFound,
-    NoUnitFound,
-    NoCellFound,
     NoRepetitionFound,
+    NoResponseFound,
     NoSweepFound,
+    NoUnitFound,
 )
 from api.models.enums import MetaType
 
+Num = int | float
 
-Num = Union[int, float]
 
-
-def find_digits(string: str) -> Union[int, None]:
+def find_digits(string: str) -> int | None:
     """
     Get last consecutive digits from string
 
@@ -33,13 +32,13 @@ def find_digits(string: str) -> Union[int, None]:
     Returns:
         The last consecutive digits or None
     """
-    digits = re.findall("([0-9]+)", string)
+    digits = re.findall(r"([0-9]+)", string)
     if not digits:
         return None
     return int(digits[-1])
 
 
-def n_smallest_index(lst: List[Num], n: int) -> int:
+def n_smallest_index(lst: list[Num], n: int) -> int:
     """
     Find the n smallest value index from a list
 
@@ -56,7 +55,7 @@ def n_smallest_index(lst: List[Num], n: int) -> int:
     return np.argsort(np.array(lst))[n]
 
 
-def select_element(lst: List[str], n: int = 0, meta: MetaType = MetaType.CELL) -> str:
+def select_element(lst: list[str], n: int = 0, meta: MetaType = MetaType.CELL) -> str:
     """
     Function to select the correct cell/repetition/sweep
 
@@ -84,7 +83,7 @@ def select_element(lst: List[str], n: int = 0, meta: MetaType = MetaType.CELL) -
     return lst[n_smallest_index(cell_digits, n)]
 
 
-def select_protocol(lst_protocols: List[str]) -> str:
+def select_protocol(lst_protocols: list[str]) -> str:
     """
     Function that selects a protocol
 
@@ -106,7 +105,7 @@ def select_protocol(lst_protocols: List[str]) -> str:
     return lst_protocols[0]
 
 
-def select_response(lst: List[str]) -> str:
+def select_response(lst: list[str]) -> str:
     """
     Finds the response element (not the stimulus)
 
@@ -119,11 +118,7 @@ def select_response(lst: List[str]) -> str:
     """
 
     response = next(
-        (
-            i
-            for i in lst
-            if any(start_str in i for start_str in ["ic_", "vcs_", "ccs_"])
-        ),
+        (i for i in lst if any(start_str in i for start_str in ["ic_", "vcs_", "ccs_"])),
         None,
     )
     if response is None:

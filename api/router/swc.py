@@ -8,7 +8,7 @@ SWC file from Nexus Delta and processing it.
 """
 
 import os
-import subprocess
+import subprocess  # noqa: S404
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -18,8 +18,8 @@ from fastapi.security import HTTPBearer
 from starlette.requests import Request
 
 from api.dependencies import retrieve_user
-from api.utils.logger import logger
 from api.services.nexus import fetch_file_content
+from api.utils.logger import logger
 
 router = APIRouter()
 require_bearer = HTTPBearer()
@@ -54,8 +54,7 @@ async def process_soma(
 
         script_path = current_directory.parent.parent / "neuromorphovis.py"
         blender_executable_path = (
-            current_directory.parent.parent
-            / "blender/bbp-blender-3.5/blender-bbp/blender"
+            current_directory.parent.parent / "blender/bbp-blender-3.5/blender-bbp/blender"
         )
 
         logger.info("Running NMV script...")
@@ -70,7 +69,7 @@ async def process_soma(
             f"--output-directory={output_directory.as_posix()}",
         ]
 
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True)  # noqa: ASYNC221, S603
         logger.info("Completed NMV script execution.")
 
         target_name = Path(temp_file_path).stem
@@ -86,9 +85,7 @@ async def process_soma(
                 )
 
         logger.error("OBJ file not found after processing.")
-        raise HTTPException(
-            status_code=404, detail="OBJ file not found after processing."
-        )
+        raise HTTPException(status_code=404, detail="OBJ file not found after processing.")
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)

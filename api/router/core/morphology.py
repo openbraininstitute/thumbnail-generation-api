@@ -8,14 +8,13 @@ This module provides functionality for generating morphology previews
 
 import io
 import uuid
-from http import HTTPStatus as status
-from typing import Optional
+from http import HTTPStatus as status  # noqa: N813
 
 import matplotlib.pyplot as plt
 import neurom as nm
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.security import HTTPBearer
-from loguru import logger as L
+from loguru import logger as L  # noqa: N812
 
 from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import ContentEmpty
@@ -44,7 +43,7 @@ async def get_morphology_preview(
     asset_id: uuid.UUID,
     context: ProjectContextDep,
     auth: AuthDep,
-    dpi: Optional[int] = Query(None, ge=10, le=600),
+    dpi: int | None = Query(None, ge=10, le=600),
 ) -> Response:
     """
     Generate a preview of a morphology
@@ -72,9 +71,7 @@ async def get_morphology_preview(
             L.info(
                 f"download_url: {download_url}",
             )
-            morphology_file = await core_client.get_asset_content(
-                download_url, as_type="str"
-            )
+            morphology_file = await core_client.get_asset_content(download_url, as_type="str")
 
         # Load the morphology from the downloaded content
         morphology = nm.load_morphology(io.StringIO(morphology_file), reader="swc")

@@ -7,11 +7,11 @@ This module provides functionality for generating morphology previews
 """
 
 import uuid
-from http import HTTPStatus as status
+from http import HTTPStatus as status  # noqa: N813
 
 from fastapi import APIRouter, Depends, Response
 from fastapi.security import HTTPBearer
-from loguru import logger as L
+from loguru import logger as L  # noqa: N812
 
 from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import AssetNotFound, ContentEmpty, ValidationResultNotFound
@@ -57,7 +57,7 @@ async def get_model_trace_preview(
                 token=auth,
             )
             if not results or not results.data:
-                raise ValidationResultNotFound()
+                raise ValidationResultNotFound
 
             L.debug("validation_results:\n{}", results)
             assets = await core_client.get_entity_assets(
@@ -72,7 +72,7 @@ async def get_model_trace_preview(
                 None,
             )
             if not asset:
-                raise AssetNotFound()
+                raise AssetNotFound
 
             download_url = await core_client.get_asset_download_url(
                 entity_type=EntityType.validation_result,
@@ -82,17 +82,13 @@ async def get_model_trace_preview(
                 token=auth,
             )
             if not download_url:
-                raise ContentEmpty()
+                raise ContentEmpty
 
-            thumbnail_file = await core_client.get_asset_content(
-                download_url, as_type="bytes"
-            )
+            thumbnail_file = await core_client.get_asset_content(download_url, as_type="bytes")
             return Response(thumbnail_file, media_type=asset.content_type)
 
     except ValidationResultNotFound as ex:
-        L.error(
-            f"ValidationResultNotFound error while getting model trace preview: {ex}"
-        )
+        L.error(f"ValidationResultNotFound error while getting model trace preview: {ex}")
         raise ApiError(
             message=ex.detail.get("message") or "Validation result not found",
             details=ex,

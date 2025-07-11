@@ -9,13 +9,13 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
 from enum import Enum, StrEnum, auto
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union, overload
+from typing import Annotated, Any, Literal, overload
 from urllib.parse import urljoin
 
 import httpx
 from fastapi import Depends, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from loguru import logger as L
+from loguru import logger as L  # noqa: N812
 from pydantic import BaseModel, ConfigDict
 
 from api.exceptions import ContentEmpty
@@ -26,7 +26,7 @@ class EntityType(StrEnum):
     """Entity types supported in the API."""
 
     @staticmethod
-    def _generate_next_value_(name, start, count, last_values) -> str:
+    def _generate_next_value_(name, start, count, last_values) -> str:  # noqa: ARG004
         return name.replace("_", "-")
 
     emodel = auto()
@@ -52,8 +52,8 @@ class AssetStatus(str, Enum):
 class ProjectContext(BaseModel):
     """Request context containing authentication and identification information."""
 
-    virtual_lab_id: Optional[uuid.UUID] = None
-    project_id: Optional[uuid.UUID] = None
+    virtual_lab_id: uuid.UUID | None = None
+    project_id: uuid.UUID | None = None
 
 
 class AssetBase(BaseModel):
@@ -61,12 +61,11 @@ class AssetBase(BaseModel):
 
     path: str
     full_path: str
-    # bucket_name: str
     is_directory: bool
     content_type: str
     size: int
-    sha256_digest: Optional[str] = None
-    meta: Dict[str, Any]
+    sha256_digest: str | None = None
+    meta: dict[str, Any]
 
 
 class AssetRead(AssetBase):
@@ -98,7 +97,7 @@ class PaginationResponse(BaseModel):
 class ListResponse[T](BaseModel):
     """List response with pagination."""
 
-    data: List[T]
+    data: list[T]
     pagination: PaginationResponse
 
 
@@ -131,9 +130,9 @@ class EntityCoreClient:
         """Close the httpx client session."""
         await self._client.aclose()
 
-    def _get_headers(
+    def _get_headers(  # noqa: PLR6301
         self, context: ProjectContext, token: HTTPAuthorizationCredentials
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Get headers for the request.
 
         Args:
@@ -246,7 +245,7 @@ class EntityCoreClient:
             follow_redirects=False,
         )
 
-        if response.status_code in (301, 302, 303, 307, 308):
+        if response.status_code in {301, 302, 303, 307, 308}:
             return response.headers.get("location")
         raise ContentEmpty("Download url can not be extracted")
 
@@ -261,7 +260,7 @@ class EntityCoreClient:
 
     async def get_asset_content(
         self, url: str, as_type: Literal["bytes", "str"] = "bytes"
-    ) -> Union[bytes, str]:
+    ) -> bytes | str:
         """Get the content of an asset from its URL.
 
         Args:
@@ -283,7 +282,7 @@ class EntityCoreClient:
             file_content = response.content
 
         if not file_content:
-            raise ContentEmpty()
+            raise ContentEmpty
 
         return file_content
 

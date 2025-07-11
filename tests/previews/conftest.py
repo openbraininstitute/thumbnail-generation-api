@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
+
 from tests.utils import load_content
 
 
@@ -44,7 +45,7 @@ def mock_morphology_content():
     return content
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def client():
     client = TestClient(app)
     return client

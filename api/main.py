@@ -34,7 +34,7 @@ tags_metadata = [
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):  # noqa: ARG001
     """
     Lifespan events set the events that will be executed at the startup (before yield)
     and the shutdown (after yield) of the application
@@ -75,8 +75,7 @@ app.add_middleware(
 
 
 @app.exception_handler(ApiError)
-async def my_custom_exception_handler(request: Request, exc: ApiError):
-    print("–– – main.py:81 – exc:", exc)
+async def my_custom_exception_handler(request: Request, exc: ApiError):  # noqa: ARG001
     return JSONResponse(
         status_code=ApiError.http_status_code,
         content={

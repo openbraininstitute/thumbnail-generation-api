@@ -7,7 +7,7 @@ This module exposes the business logic for generating trace thumbnails
 """
 
 import io
-from typing import Any, Union, cast
+from typing import Any, cast
 
 import h5py
 import matplotlib.pyplot as plt
@@ -26,7 +26,7 @@ from api.utils.trace_img import (
     select_response,
 )
 
-Num = Union[int, float]
+Num = int | float
 
 
 def plot_nwb(data: NDArray[Any], unit: str, rate: Num):
@@ -41,9 +41,7 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num):
         if xory == "x":
             stepsize = round((end - start) / 5 / 100) * 100
             xt = np.linspace(start, end, 6)
-            return np.concatenate(
-                (np.unique(np.round(xt[:-1] / 100) * 100), xt[-1]), axis=None
-            )
+            return np.concatenate((np.unique(np.round(xt[:-1] / 100) * 100), xt[-1]), axis=None)
 
         if xory == "y":
             stepsize = (end - start) / 4
@@ -54,10 +52,10 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num):
 
     # Plotting
     if unit == "volts":
-        data = data * 1e3
+        data *= 1e3
         yrunit = "mV"
     elif unit == "amperes":
-        data = data * 1e12
+        data *= 1e12
         yrunit = "pA"
 
     npoints = data.shape[0]
@@ -71,7 +69,7 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num):
     ax.tick_params(labelsize=fontsize)
     ax.plot(timestamps, data, color="black")
     ax.set_xlabel(xunit, fontsize=fontsize)
-    ax.set_ylabel(cast(str, yrunit), fontsize=fontsize)
+    ax.set_ylabel(cast("str", yrunit), fontsize=fontsize)
     ax.xaxis.set_ticks(new_ticks(timestamps.min(), timestamps.max(), "x"))  # type: ignore TODO: Fix type
     ax.set_xticklabels([f"{label:2.0f}" for label in ax.get_xticks()])
     ax.yaxis.set_ticks(new_ticks(min(data), max(data), "y"))  # type: ignore TODO: Fix type
@@ -85,34 +83,28 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num):
 
 
 def generate_electrophysiology_image(
-    access_token: str, content_url: str = "", dpi: Union[int, None] = 72
+    access_token: str, content_url: str = "", dpi: int | None = 72
 ) -> bytes:
     """Creates and returns an electrophysiology trace image.
 
     Args:
         access_token (str): The authorization token.
         content_url (str): The content URL that contains the NWB file.
-        dpi (Union[int, None]): Optional parameter that defines the Dots Per Inch of the image result.
+        dpi (Union[int, None]): Defines the Dots Per Inch of the image result.
                                 Higher DPI means higher resolution.
 
     Returns:
         bytes: The image in bytes format.
     """
-    content: bytes = fetch_file_content(
-        access_token=access_token, content_url=content_url
-    )
+    content: bytes = fetch_file_content(access_token=access_token, content_url=content_url)
 
     # Using context manager to handle the HDF5 file properly and ensure it is closed
     with h5py.File(io.BytesIO(content), "r") as h5_handle:
-        h5_handle = cast(dict, h5_handle["data_organization"])  # TODO define interface
+        h5_handle = cast("dict", h5_handle["data_organization"])  # TODO define interface
         h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0)]
         h5_handle = h5_handle[select_protocol(list(h5_handle.keys()))]
-        h5_handle = h5_handle[
-            select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)
-        ]
-        h5_handle = h5_handle[
-            select_element(list(h5_handle.keys()), n=-3, meta=MetaType.SWEEP)
-        ]
+        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)]
+        h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=-3, meta=MetaType.SWEEP)]
         h5_handle = h5_handle[select_response(list(h5_handle.keys()))]
 
         # Get relevant data, unit, rate, and conversion factor

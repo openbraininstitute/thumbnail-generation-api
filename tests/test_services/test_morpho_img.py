@@ -3,9 +3,12 @@ Unit test module for testing morphology thumbnail generation service
 """
 
 from io import BytesIO
-from PIL import Image
 from unittest.mock import patch
+
+from PIL import Image
+
 from api.services.morpho_img import generate_morphology_image
+
 from tests.utils import load_content
 
 

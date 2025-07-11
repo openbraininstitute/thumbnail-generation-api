@@ -5,7 +5,6 @@ This module exposes the business logic for generating morphology thumbnails
 """
 
 import io
-from typing import Union
 
 import matplotlib.pyplot as plt
 import neurom as nm
@@ -44,10 +43,10 @@ def plot_morphology(morphology):
 
 
 def generate_morphology_image(
-    access_token: str, content_url: str = "", dpi: Union[int, None] = 72
+    access_token: str, content_url: str = "", dpi: int | None = 72
 ) -> bytes:
     """
-    Returns a PNG image of a morphology (by generating a matplotlib figure from its SWC distribution).
+    Returns a PNG image of a morphology from its SWC distribution.
 
     Parameters:
         - authorization (str): Authorization header containing the access token.
