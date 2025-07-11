@@ -6,11 +6,11 @@ import json
 from typing import Literal
 
 
-def load_content(file_path: str, encoded: bool = True):
+def load_content(file_path: str, *, encoded: bool = True):
     """
     Loads content from a file
     """
-    with open(file_path) as file:
+    with open(file_path, encoding="utf-8") as file:
         if encoded:
             return file.read().encode("utf-8")
         return file.read()
@@ -20,7 +20,7 @@ def load_nwb_content(file_path: str):
     """
     Loads content for an NWB file
     """
-    with open(file_path, "rb") as file:
+    with open(file_path, "rb") as file:  # noqa: FURB101
         file_content = file.read()
 
     return file_content
@@ -42,17 +42,18 @@ def load_json_file(filepath: str, not_include: Literal["stimulus", "simulation"]
     """
 
     try:
-        with open(filepath) as f:
+        with open(filepath, encoding="utf-8") as f:
             json_data = json.load(f)
             if not_include == "simulation":
                 del json_data["simulation"]
                 return json.dumps(json_data).encode("utf-8")
-            elif not_include == "stimulus":
+            if not_include == "stimulus":
                 del json_data["stimulus"]
                 return json.dumps(json_data).encode("utf-8")
-            else:
-                return json.dumps(json_data).encode("utf-8")
+            return json.dumps(json_data).encode("utf-8")
     except FileNotFoundError:
-        raise FileNotFoundError(f"JSON file not found: {filepath}")
+        msg = f"JSON file not found: {filepath}"
+        raise FileNotFoundError(msg) from None
     except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(f"Invalid JSON format in file: {filepath} ({str(e)})")
+        msg = f"Invalid JSON format in file: {filepath} ({e})"
+        raise json.JSONDecodeError(msg, e.doc, e.pos) from e

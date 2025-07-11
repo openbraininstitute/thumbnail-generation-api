@@ -2,7 +2,7 @@
 Unit test module related to the router of /generate
 """
 
-from http import HTTPStatus as status
+from http import HTTPStatus as status  # noqa: N813
 from unittest.mock import Mock, patch
 
 import pytest
@@ -19,7 +19,7 @@ def override_retrieve_user():
     """
     Overrides the retrieve_user() function
     """
-    return User(access_token="test-access-token", username="test")
+    return User(access_token="test-access-token", username="test")  # noqa: S106
 
 
 @pytest.fixture

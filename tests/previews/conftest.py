@@ -45,7 +45,7 @@ def mock_morphology_content():
     return content
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def client():
     client = TestClient(app)
     return client

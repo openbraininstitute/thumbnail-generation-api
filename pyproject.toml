@@ -38,20 +38,36 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+include = ["pyproject.toml", "api/**/*.py", "tests/**/*.py"]
 
 [tool.ruff.lint]
-select = [
-    "D", # pydocstyle
-    "E", # pycodestyle
-    "F", # pyflakes
-    "I", # isort
-    "PL", # pylint
-    "UP", # pyupgrade
-]
+preview = true
+select = ["ALL"]
 ignore = [
+    "D",       # pydocstyle
+    "ANN",     # All the annotations
+    "COM812",  # Trailing comma (to have similar behavior to black)
+    "CPY001",  # Missing copyright notice at top of file
+    "DOC201",  # `return` is not documented in docstring
+    "DOC402",  # `yield` is not documented in docstring
+    "DOC501",  # Raised exception missing from docstring
+    "ICN001",  # `matplotlib` should be imported as `mpl`
     "PLW2901", # `with` statement variable overwritten by assignment target
     "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
-    "D",       # pydocstyle
+    "RET504",  # Unnecessary assignment before `return` statement
+    "RUF029",  # Function is declared `async`, but doesn't `await` or use `async` features.
+    "TD",      # TODOs
+    "FIX002",  # Line contains TODO, consider resolving the issue
+    # to be fixed later
+    "EM101",   # Exception must not use a string literal, assign to variable first
+    "FAST002", # FastAPI dependency without `Annotated`
+    "B008",    # Do not perform function call `Depends` in argument defaults
+    "TRY003",  # Avoid specifying long messages outside the exception class
+    "TRY301",  # Abstract `raise` to an inner function
+    "RUF015",  # Prefer `next(iter())` over single element slice
+    "PTH",     # `os.path` should be replaced by pathlib
+    "SIM108",  # Use ternary operator
+    "UP042",   # Class inherits from both `str` and `enum.Enum
 ]
 
 [tool.ruff.lint.isort]
@@ -59,16 +75,23 @@ known-local-folder = ["tests"]
 combine-as-imports = true
 
 [tool.ruff.lint.per-file-ignores]
-"nmv/**.py" = ["ALL"]
 "tests/**.py" = [
     "ANN",     # Missing type annotation
+    "ARG001",  # Unused function argument
+    "ARG002",  # Unused method argument
+    "ARG005",  # Unused lambda argument
     "D",       # pydocstyle
     "ERA001",  # Found commented-out code
     "INP001",  # Missing `__init__.py`
     "PLC2701", # Private name import from external module
     "PLR0913", # Too many arguments in function definition
     "PLR0915", # Too many statements
+    "PLR0917", # Too many positional arguments
     "PLR2004", # magic value (constant) used in comparison (i.e. expected == 3)
+    "PTH123",  # `open()` should be replaced by `Path.open()`
     "S101",    # Use of `assert` detected
     "SLF001",  # private member access
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

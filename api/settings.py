@@ -36,7 +36,7 @@ class Settings(BaseSettings):
         """
         Only "local" and "development" have debug_mode = True
         """
-        return self.environment in (Environment.LOCAL, Environment.DEVELOPMENT)
+        return self.environment in {Environment.LOCAL, Environment.DEVELOPMENT}
 
 
 settings = Settings()

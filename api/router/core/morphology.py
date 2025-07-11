@@ -8,13 +8,13 @@ This module provides functionality for generating morphology previews
 
 import io
 import uuid
-from http import HTTPStatus as status
+from http import HTTPStatus as status  # noqa: N813
 
 import matplotlib.pyplot as plt
 import neurom as nm
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.security import HTTPBearer
-from loguru import logger as L
+from loguru import logger as L  # noqa: N812
 
 from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import ContentEmpty

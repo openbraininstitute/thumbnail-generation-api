@@ -6,12 +6,12 @@ This module provides functionality for generating simulation plot previews
 
 import uuid
 from enum import StrEnum
-from http import HTTPStatus as status
+from http import HTTPStatus as status  # noqa: N813
 from typing import Literal, cast
 
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.security import HTTPBearer
-from loguru import logger as L
+from loguru import logger as L  # noqa: N812
 
 from api.core.api import ApiError, ApiErrorCode
 from api.exceptions import ContentEmpty
@@ -36,7 +36,7 @@ class SimulationType(StrEnum):
 @router.get(
     "/{simulation_type}/preview",
 )
-async def get_simulation_plot(  # noqa: PLR0913
+async def get_simulation_plot(  # noqa: PLR0913, PLR0917
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
     simulation_type: Literal[
@@ -70,7 +70,7 @@ async def get_simulation_plot(  # noqa: PLR0913
             L.info(f"{context}")
 
             download_url = await core_client.get_asset_download_url(
-                entity_type=cast(EntityType, simulation_type),
+                entity_type=cast("EntityType", simulation_type),
                 entity_id=entity_id,
                 asset_id=asset_id,
                 context=context,

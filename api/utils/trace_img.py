@@ -32,7 +32,7 @@ def find_digits(string: str) -> int | None:
     Returns:
         The last consecutive digits or None
     """
-    digits = re.findall("([0-9]+)", string)
+    digits = re.findall(r"([0-9]+)", string)
     if not digits:
         return None
     return int(digits[-1])

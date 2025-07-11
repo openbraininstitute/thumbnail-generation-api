@@ -5,7 +5,7 @@ This module defines a FastAPI router for handling requests related to morphology
 It includes an endpoint to get a preview image of a morphology.
 """
 
-from http import HTTPStatus as status
+from http import HTTPStatus as status  # noqa: N813
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import HTTPBearer

@@ -52,10 +52,10 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num):
 
     # Plotting
     if unit == "volts":
-        data = data * 1e3
+        data *= 1e3
         yrunit = "mV"
     elif unit == "amperes":
-        data = data * 1e12
+        data *= 1e12
         yrunit = "pA"
 
     npoints = data.shape[0]
@@ -69,7 +69,7 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num):
     ax.tick_params(labelsize=fontsize)
     ax.plot(timestamps, data, color="black")
     ax.set_xlabel(xunit, fontsize=fontsize)
-    ax.set_ylabel(cast(str, yrunit), fontsize=fontsize)
+    ax.set_ylabel(cast("str", yrunit), fontsize=fontsize)
     ax.xaxis.set_ticks(new_ticks(timestamps.min(), timestamps.max(), "x"))  # type: ignore TODO: Fix type
     ax.set_xticklabels([f"{label:2.0f}" for label in ax.get_xticks()])
     ax.yaxis.set_ticks(new_ticks(min(data), max(data), "y"))  # type: ignore TODO: Fix type
@@ -100,7 +100,7 @@ def generate_electrophysiology_image(
 
     # Using context manager to handle the HDF5 file properly and ensure it is closed
     with h5py.File(io.BytesIO(content), "r") as h5_handle:
-        h5_handle = cast(dict, h5_handle["data_organization"])  # TODO define interface
+        h5_handle = cast("dict", h5_handle["data_organization"])  # TODO define interface
         h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0)]
         h5_handle = h5_handle[select_protocol(list(h5_handle.keys()))]
         h5_handle = h5_handle[select_element(list(h5_handle.keys()), n=0, meta=MetaType.REPETITION)]

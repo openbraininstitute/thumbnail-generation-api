@@ -8,7 +8,7 @@ SWC file from Nexus Delta and processing it.
 """
 
 import os
-import subprocess
+import subprocess  # noqa: S404
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -69,7 +69,7 @@ async def process_soma(
             f"--output-directory={output_directory.as_posix()}",
         ]
 
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True)  # noqa: ASYNC221, S603
         logger.info("Completed NMV script execution.")
 
         target_name = Path(temp_file_path).stem

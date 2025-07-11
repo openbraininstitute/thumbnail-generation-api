@@ -15,7 +15,7 @@ from urllib.parse import urljoin
 import httpx
 from fastapi import Depends, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from loguru import logger as L
+from loguru import logger as L  # noqa: N812
 from pydantic import BaseModel, ConfigDict
 
 from api.exceptions import ContentEmpty
@@ -26,7 +26,7 @@ class EntityType(StrEnum):
     """Entity types supported in the API."""
 
     @staticmethod
-    def _generate_next_value_(name, start, count, last_values) -> str:
+    def _generate_next_value_(name, start, count, last_values) -> str:  # noqa: ARG004
         return name.replace("_", "-")
 
     emodel = auto()
@@ -61,7 +61,6 @@ class AssetBase(BaseModel):
 
     path: str
     full_path: str
-    # bucket_name: str
     is_directory: bool
     content_type: str
     size: int
@@ -131,7 +130,7 @@ class EntityCoreClient:
         """Close the httpx client session."""
         await self._client.aclose()
 
-    def _get_headers(
+    def _get_headers(  # noqa: PLR6301
         self, context: ProjectContext, token: HTTPAuthorizationCredentials
     ) -> dict[str, str]:
         """Get headers for the request.
@@ -246,7 +245,7 @@ class EntityCoreClient:
             follow_redirects=False,
         )
 
-        if response.status_code in (301, 302, 303, 307, 308):
+        if response.status_code in {301, 302, 303, 307, 308}:
             return response.headers.get("location")
         raise ContentEmpty("Download url can not be extracted")
 
@@ -283,7 +282,7 @@ class EntityCoreClient:
             file_content = response.content
 
         if not file_content:
-            raise ContentEmpty()
+            raise ContentEmpty
 
         return file_content
 

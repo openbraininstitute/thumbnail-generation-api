@@ -31,7 +31,7 @@ def fetch_file_content(access_token: str, content_url: str = "") -> bytes:
         AuthenticationIssueException: If authentication fails (401).
         AuthorizationIssueException: If access is forbidden (403).
         requests.exceptions.RequestException: For other types of request failures.
-    """
+    """  # noqa: DOC502
     parsed_content_url = urlparse(content_url)
 
     if not all([parsed_content_url.scheme, parsed_content_url.netloc, parsed_content_url.path]):

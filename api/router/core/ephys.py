@@ -8,7 +8,7 @@ This module provides functionality for generating ephys previews
 import io
 import uuid
 from dataclasses import dataclass
-from http import HTTPStatus as status
+from http import HTTPStatus as status  # noqa: N813
 from typing import cast
 
 import h5py
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.security import HTTPBearer
-from loguru import logger as L
+from loguru import logger as L  # noqa: N812
 from numpy.typing import NDArray
 
 from api.core.api import ApiError, ApiErrorCode
@@ -75,13 +75,13 @@ async def get_ephys_content(
         return await core_client.get_asset_content(download_url)
 
 
-def extract_ephys_data(ephys_file: bytes) -> EphysData:
+def extract_ephys_data(ephys_file: bytes) -> EphysData:  # noqa: PLR0914
     """Extract data from the ephys HDF5 file."""
     # pylint: disable-msg=too-many-locals
     with h5py.File(io.BytesIO(ephys_file), "r") as h5_handle:
         try:
             # LNMC-complient format containing data organization hierarchy
-            data_org_group = cast(dict, h5_handle["data_organization"])  # Todo define interface
+            data_org_group = cast("dict", h5_handle["data_organization"])  # Todo define interface
 
             cell_key = select_element(list(data_org_group.keys()), n=0)
             cell_group = data_org_group[cell_key]
@@ -101,7 +101,7 @@ def extract_ephys_data(ephys_file: bytes) -> EphysData:
             response_group = sweep_group[response_key]
         except KeyError:
             # Generic format
-            acquisition_group = cast(dict, h5_handle["acquisition"])  # Todo define interfaceƒ
+            acquisition_group = cast("dict", h5_handle["acquisition"])  # Todo define interfaceƒ
 
             response_key = select_element(list(acquisition_group.keys()), n=-3)
             response_group = acquisition_group[response_key]
