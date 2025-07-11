@@ -9,7 +9,7 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
 from enum import Enum, StrEnum, auto
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union, overload
+from typing import Annotated, Any, Literal, overload
 from urllib.parse import urljoin
 
 import httpx
@@ -52,8 +52,8 @@ class AssetStatus(str, Enum):
 class ProjectContext(BaseModel):
     """Request context containing authentication and identification information."""
 
-    virtual_lab_id: Optional[uuid.UUID] = None
-    project_id: Optional[uuid.UUID] = None
+    virtual_lab_id: uuid.UUID | None = None
+    project_id: uuid.UUID | None = None
 
 
 class AssetBase(BaseModel):
@@ -65,8 +65,8 @@ class AssetBase(BaseModel):
     is_directory: bool
     content_type: str
     size: int
-    sha256_digest: Optional[str] = None
-    meta: Dict[str, Any]
+    sha256_digest: str | None = None
+    meta: dict[str, Any]
 
 
 class AssetRead(AssetBase):
@@ -98,7 +98,7 @@ class PaginationResponse(BaseModel):
 class ListResponse[T](BaseModel):
     """List response with pagination."""
 
-    data: List[T]
+    data: list[T]
     pagination: PaginationResponse
 
 
@@ -133,7 +133,7 @@ class EntityCoreClient:
 
     def _get_headers(
         self, context: ProjectContext, token: HTTPAuthorizationCredentials
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Get headers for the request.
 
         Args:
@@ -261,7 +261,7 @@ class EntityCoreClient:
 
     async def get_asset_content(
         self, url: str, as_type: Literal["bytes", "str"] = "bytes"
-    ) -> Union[bytes, str]:
+    ) -> bytes | str:
         """Get the content of an asset from its URL.
 
         Args:

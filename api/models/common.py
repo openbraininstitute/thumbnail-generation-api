@@ -2,7 +2,8 @@
 Model module defining models related to images
 """
 
-from typing import List, Literal, Optional
+from typing import Literal
+
 from fastapi import Query
 from pydantic import BaseModel
 
@@ -13,7 +14,7 @@ class ImageGenerationInput(BaseModel):
     """
 
     content_url: str
-    dpi: Optional[int] = Query(None, ge=10, le=600)
+    dpi: int | None = Query(None, ge=10, le=600)
 
 
 PlotTarget = Literal["stimulus", "simulation"]
@@ -26,8 +27,8 @@ class SimulationGenerationInput(BaseModel):
 
     content_url: str
     target: PlotTarget
-    w: Optional[int] = None
-    h: Optional[int] = None
+    w: int | None = None
+    h: int | None = None
 
 
 class PlotData(BaseModel):
@@ -35,8 +36,8 @@ class PlotData(BaseModel):
     Plotly data format
     """
 
-    x: List[float]
-    y: List[float]
+    x: list[float]
+    y: list[float]
     type: str = "scatter"
     name: str
 
@@ -46,8 +47,8 @@ class SimulationConfiguration(BaseModel):
     Configuration file content for simulation
     """
 
-    stimulus: List[PlotData]
-    simulation: dict[str, List[PlotData]]
+    stimulus: list[PlotData]
+    simulation: dict[str, list[PlotData]]
 
 
 class ErrorMessage(BaseModel):

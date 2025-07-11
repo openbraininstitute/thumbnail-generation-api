@@ -3,7 +3,7 @@ Utils module for unit tests
 """
 
 import json
-from typing import Literal, Optional
+from typing import Literal
 
 
 def load_content(file_path: str, encoded: bool = True):
@@ -26,9 +26,7 @@ def load_nwb_content(file_path: str):
     return file_content
 
 
-def load_json_file(
-    filepath: str, not_include: Optional[Literal["stimulus", "simulation"]] = None
-):
+def load_json_file(filepath: str, not_include: Literal["stimulus", "simulation"] | None = None):
     """
     Loads a JSON file from the specified path and returns the parsed data.
 
@@ -44,7 +42,7 @@ def load_json_file(
     """
 
     try:
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             json_data = json.load(f)
             if not_include == "simulation":
                 del json_data["simulation"]
@@ -57,6 +55,4 @@ def load_json_file(
     except FileNotFoundError:
         raise FileNotFoundError(f"JSON file not found: {filepath}")
     except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(
-            f"Invalid JSON format in file: {filepath} ({str(e)})"
-        )
+        raise json.JSONDecodeError(f"Invalid JSON format in file: {filepath} ({str(e)})")

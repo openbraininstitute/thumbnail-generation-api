@@ -16,7 +16,7 @@ from api.exceptions import (
 
 def fetch_file_content(access_token: str, content_url: str = "") -> bytes:
     """
-        Gets the File content of a Nexus distribution (by requesting the resource from its content_url).
+        Gets the File content of a Nexus distribution from the content_url of the distribution.
 
         Parameters:
             - authorization (str): Authorization header containing the access token.
@@ -34,9 +34,7 @@ def fetch_file_content(access_token: str, content_url: str = "") -> bytes:
     """
     parsed_content_url = urlparse(content_url)
 
-    if not all(
-        [parsed_content_url.scheme, parsed_content_url.netloc, parsed_content_url.path]
-    ):
+    if not all([parsed_content_url.scheme, parsed_content_url.netloc, parsed_content_url.path]):
         raise InvalidUrlParameterException
 
     response = requests.get(

@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from api.dependencies import retrieve_user
 from api.main import app
 from api.user import User
+
 from tests.utils import load_content, load_json_file, load_nwb_content
 
 
@@ -234,9 +235,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
 
     @patch(
         "api.router.generate.fetch_file_content",
-        return_value=load_json_file(
-            "./tests/fixtures/data/simulation_config.json", "stimulus"
-        ),
+        return_value=load_json_file("./tests/fixtures/data/simulation_config.json", "stimulus"),
     )
     def test_stimulus_not_in_config(self, fetch_file_content, mock_headers):
         """
@@ -252,9 +251,7 @@ class TestSingleNeuronSimulationThumbnailGenerationRouter:
 
     @patch(
         "api.router.generate.fetch_file_content",
-        return_value=load_json_file(
-            "./tests/fixtures/data/simulation_config.json", "simulation"
-        ),
+        return_value=load_json_file("./tests/fixtures/data/simulation_config.json", "simulation"),
     )
     def test_stimulation_not_in_config(self, fetch_file_content, mock_headers):
         """

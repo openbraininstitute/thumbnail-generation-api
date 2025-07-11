@@ -3,6 +3,7 @@ Nexus-related fixtures definition
 """
 
 import pytest
+
 from tests.utils import load_nwb_content
 
 

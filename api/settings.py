@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     """
     Defines basic global settings that can be used throughout the application.
 
-    Variables are retrieved from environment variables but also calculated based on environment variables
+    Variables are retrieved from environment variables but also calculated.
     """
 
     model_config = SettingsConfigDict(env_file=".env")

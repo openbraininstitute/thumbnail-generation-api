@@ -117,8 +117,9 @@ class EntityNotFoundException(HTTPException):
 class InvalidUrlParameterException(HTTPException):
     """Exception raised when a URL parameter is empty or invalid.
 
-    This exception is typically used to indicate that a parameter, such as a content_url, is expected to exist,
-    and be valid, but instead is either an empty string or simply not a valid URL.
+    This exception is typically used to indicate that a parameter, such as a content_url,
+    is expected to exist, and be valid, but instead is either an empty string or simply
+    not a valid URL.
     """
 
     def __init__(self) -> None:

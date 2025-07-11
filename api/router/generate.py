@@ -87,9 +87,7 @@ def get_simulation_plot(
     https://sbo-nexus-delta.shapes-registry.org/v1/files/cad43d74-f697-48d6-9242-28cb6b4a4956/f9b265b2-22c3-4a92-9ad5-79dff37e39ca/https%3A%2F%2Fopenbrainplatform.org%2Fdata%2Fcad43d74-f697-48d6-9242-28cb6b4a4956%2Ff9b265b2-22c3-4a92-9ad5-79dff37e39ca%2Feadf0aa4-109c-4422-806c-325e5669565a?rev=1
     """
 
-    response = fetch_file_content(user.access_token, config.content_url).decode(
-        encoding="utf-8"
-    )
+    response = fetch_file_content(user.access_token, config.content_url).decode(encoding="utf-8")
 
     try:
         image = generate_simulation_plots(
@@ -104,10 +102,6 @@ def get_simulation_plot(
             )
         return Response(image, media_type="image/png")
     except ValueError as exc:
-        raise HTTPException(
-            status.BAD_GATEWAY, "Simulation config file is malformed"
-        ) from exc
+        raise HTTPException(status.BAD_GATEWAY, "Simulation config file is malformed") from exc
     except Exception as exc:
-        raise HTTPException(
-            status.INTERNAL_SERVER_ERROR, "Internal server error"
-        ) from exc
+        raise HTTPException(status.INTERNAL_SERVER_ERROR, "Internal server error") from exc

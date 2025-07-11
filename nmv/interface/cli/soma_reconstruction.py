@@ -145,9 +145,7 @@ def reconstruct_soma_three_dimensional_profile_mesh(cli_morphology, cli_options)
         nmv.file.ops.clean_and_create_directory(output_directory)
 
         # Simulation
-        for i in range(
-            nmv.consts.Simulation.MIN_FRAME, nmv.consts.Simulation.MAX_FRAME
-        ):
+        for i in range(nmv.consts.Simulation.MIN_FRAME, nmv.consts.Simulation.MAX_FRAME):
             # Update the frame based on the soft body simulation
             bpy.context.scene.frame_set(i)
 

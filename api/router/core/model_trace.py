@@ -84,15 +84,11 @@ async def get_model_trace_preview(
             if not download_url:
                 raise ContentEmpty()
 
-            thumbnail_file = await core_client.get_asset_content(
-                download_url, as_type="bytes"
-            )
+            thumbnail_file = await core_client.get_asset_content(download_url, as_type="bytes")
             return Response(thumbnail_file, media_type=asset.content_type)
 
     except ValidationResultNotFound as ex:
-        L.error(
-            f"ValidationResultNotFound error while getting model trace preview: {ex}"
-        )
+        L.error(f"ValidationResultNotFound error while getting model trace preview: {ex}")
         raise ApiError(
             message=ex.detail.get("message") or "Validation result not found",
             details=ex,
