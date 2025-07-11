@@ -1,0 +1,13 @@
+build
+dist
+htmlcov
+venv
+.env*
+.venv*
+.coverage
+.tox
+.idea
+**/__pycache__
+**/*.pyc
+**/*.swp
+**/*.egg-info

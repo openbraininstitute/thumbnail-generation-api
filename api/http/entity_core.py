@@ -16,7 +16,7 @@ import httpx
 from fastapi import Depends, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from loguru import logger as L
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from api.exceptions import ContentEmpty
 from api.settings import settings
@@ -77,15 +77,14 @@ class AssetRead(AssetBase):
 
 
 class ValidationResult(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     name: str
     passed: bool
     validated_entity_id: uuid.UUID
     creation_date: datetime
     update_date: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class PaginationResponse(BaseModel):
