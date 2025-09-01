@@ -1,8 +1,9 @@
-"""
-Nexus-related fixtures definition
-"""
+"""Global fixtures."""
 
 import pytest
+from fastapi.testclient import TestClient
+
+from api.main import app
 
 from tests.utils import load_nwb_content
 
@@ -37,3 +38,9 @@ def access_token() -> str:
     Mock fixture of an access token
     """
     return ""
+
+
+@pytest.fixture
+def client() -> TestClient:
+    client = TestClient(app)
+    return client
