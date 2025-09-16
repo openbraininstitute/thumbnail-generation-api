@@ -9,6 +9,7 @@ import time
 
 import jwt
 from starlette.requests import Request
+from starlette.responses import Response
 
 from api.exceptions import ExpiredAccessToken, InvalidAccessToken
 from api.user import User
@@ -48,3 +49,25 @@ def retrieve_user(request: Request) -> User:
         return User(username=decoded.get("preferred_username"), access_token=access_token)
     except jwt.InvalidTokenError as inv_token_error:
         raise InvalidAccessToken from inv_token_error
+
+
+class CacheControl:
+    """Add Cache-Control to the response headers.
+
+    It can be used as a dependency in any endpoint. Usage example:
+
+        @app.get("/health", dependencies=[Depends(CacheControl("no-cache"))])
+        async def health() -> dict:
+        ...
+
+    """
+
+    def __init__(self, *values: str) -> None:
+        """Init the instance with a list of values."""
+        self._values = values
+
+    def __call__(self, request: Request, response: Response) -> Response:
+        """Add the header."""
+        if request.method == "GET":
+            response.headers["Cache-Control"] = ", ".join(self._values)
+        return response
