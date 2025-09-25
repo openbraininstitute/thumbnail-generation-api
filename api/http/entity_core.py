@@ -34,7 +34,7 @@ class EntityType(StrEnum):
     experimental_neuron_density = auto()
     experimental_synapses_per_connection = auto()
     mesh = auto()
-    reconstruction_morphology = auto()
+    cell_morphology = auto()
     electrical_cell_recording = auto()
     single_neuron_simulation = auto()
     single_neuron_synaptome = auto()
