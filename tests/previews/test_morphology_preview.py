@@ -27,7 +27,7 @@ def test_morphology_preview_success(
     mock_get_entitycore_client.return_value = mock_context
 
     response = client.get(
-        "/core/reconstruction-morphology/preview",
+        "/core/cell-morphology/preview",
         headers=mock_headers,
         params={
             "entity_id": str(mock_entity_id),
@@ -60,7 +60,7 @@ def test_morphology_preview_without_dpi(
     mock_get_entitycore_client.return_value = mock_context
 
     response = client.get(
-        "/core/reconstruction-morphology/preview",
+        "/core/cell-morphology/preview",
         headers=mock_headers,
         params={
             "entity_id": str(mock_entity_id),
@@ -82,7 +82,7 @@ def test_morphology_preview_invalid_dpi(
 ):
     """Test preview generation with invalid DPI value"""
     response = client.get(
-        "/core/reconstruction-morphology/preview",
+        "/core/cell-morphology/preview",
         headers=mock_headers,
         params={
             "entity_id": str(mock_entity_id),
@@ -112,7 +112,7 @@ def test_morphology_preview_asset_not_found(
     mock_get_entitycore_client.return_value = mock_context
 
     res = client.get(
-        "/core/reconstruction-morphology/preview",
+        "/core/cell-morphology/preview",
         headers=mock_headers,
         params={
             "entity_id": str(mock_entity_id),
@@ -130,7 +130,7 @@ def test_morphology_preview_missing_auth(
 ):
     """Test that authentication is required"""
     response = client.get(
-        "/core/reconstruction-morphology/preview",
+        "/core/cell-morphology/preview",
         params={
             "entity_id": str(mock_entity_id),
             "asset_id": str(mock_asset_id),
@@ -147,7 +147,7 @@ def test_morphology_preview_invalid_uuid(
 ):
     """Test handling of invalid UUID format"""
     response = client.get(
-        "/core/reconstruction-morphology/preview",
+        "/core/cell-morphology/preview",
         headers=mock_headers,
         params={
             "entity_id": "invalid-uuid",
@@ -186,7 +186,7 @@ def test_morphology_preview_buffering_error(
         mock_plot.side_effect = Exception("Failed to generate buffer")
 
         res = client.get(
-            "/core/reconstruction-morphology/preview",
+            "/core/cell-morphology/preview",
             headers=mock_headers,
             params={
                 "entity_id": str(mock_entity_id),
@@ -208,7 +208,7 @@ def test_morphology_preview_too_high_dpi(
 ):
     """Test preview generation with DPI value above maximum"""
     response = client.get(
-        "/core/reconstruction-morphology/preview",
+        "/core/cell-morphology/preview",
         headers=mock_headers,
         params={
             "entity_id": str(mock_entity_id),
@@ -242,7 +242,7 @@ def test_morphology_preview_malformed_swc(
     mock_get_entitycore_client.return_value = mock_context
 
     res = client.get(
-        "/core/reconstruction-morphology/preview",
+        "/core/cell-morphology/preview",
         headers=mock_headers,
         params={
             "entity_id": str(mock_entity_id),

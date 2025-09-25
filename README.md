@@ -51,7 +51,7 @@ Here are some simple examples to get you started with using the Thumbnail Genera
     AUTH_TOKEN=xxxxxxxx
     ENTITY_ID=059bd4df-acc5-4ec3-8203-53ceacd0e2e0
     ASSET_ID=f11bc66c-68f3-4310-9e34-7b947a0c5be2
-    curl -X GET "http://127.0.0.1:8003/core/reconstruction-morphology/preview?dpi=400&entity_id=$ENTITY_ID$&asset_id=$ASSET_ID" -H "accept: application/json" -H "Authorization: Bearer $AUTH_TOKEN"
+    curl -X GET "http://127.0.0.1:8003/core/cell-morphology/preview?dpi=400&entity_id=$ENTITY_ID$&asset_id=$ASSET_ID" -H "accept: application/json" -H "Authorization: Bearer $AUTH_TOKEN"
     ```
 
 For more detailed usage and examples, please refer to the documentation available at `http://127.0.0.1:8003/docs`.

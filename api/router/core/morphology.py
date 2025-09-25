@@ -28,7 +28,7 @@ from api.tools.plot_morphology import plot_morphology
 from api.utils.common import get_buffer
 
 router = APIRouter(
-    prefix="/reconstruction-morphology",
+    prefix="/cell-morphology",
 )
 require_bearer = HTTPBearer()
 
@@ -61,7 +61,7 @@ async def get_morphology_preview(
     try:
         async with get_entitycore_client() as core_client:
             download_url = await core_client.get_asset_download_url(
-                entity_type=EntityType.reconstruction_morphology,
+                entity_type=EntityType.cell_morphology,
                 entity_id=entity_id,
                 asset_id=asset_id,
                 context=context,
