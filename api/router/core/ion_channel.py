@@ -13,7 +13,7 @@ from typing import cast
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-from fastapi import APIRouter, Depends, File, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 from fastapi.security import HTTPBearer
 from loguru import logger as L  # noqa: N812
 
@@ -27,18 +27,9 @@ from api.http.entity_core import (
     ProjectContextDep,
     get_entitycore_client,
 )
-from api.models.enums import MetaType
 from api.tools.plot_ion_channel import plot_nwb_ion_channel
-from api.utils.common import get_buffer
-from api.utils.trace_img import (
-    get_conversion,
-    get_rate,
-    get_unit,
-    select_element,
-    select_protocol,
-    select_response,
-)
 from api.types import IonChannelRecordingData
+from api.utils.common import get_buffer
 
 router = APIRouter(
     prefix="/ion-channel-recording",
@@ -63,23 +54,10 @@ async def get_ion_channel_recording_content(
         )
         return await core_client.get_asset_content(download_url)
 
-def debug_h5(handle: File):
-    """debug_h5
-    
-    Print out the structure of a H5 file for debug purpose."""
-    fringe = [(key, handle[key], 0) for key in list(handle.keys())]
-    while len(fringe) > 0:
-        item, *fringe = fringe
-        key, elem, level = item
-        if isinstance(elem, h5py._hl.group.Group):
-            print("  " * level, key)
-            for child in list(elem.keys()):
-                fringe.insert(0, (child, elem[child], level + 1))
-        else:
-            print("  " * level, key, ": Dataset", elem.shape)
 
-
-def extract_ion_channel_recording_data(ion_channel_recording_file: bytes) -> IonChannelRecordingData:  # noqa: PLR0914
+def extract_ion_channel_recording_data(
+    ion_channel_recording_file: bytes,
+) -> IonChannelRecordingData:
     """Extract data from the ion_channel_recording HDF5 file."""
     # pylint: disable-msg=too-many-locals
     with h5py.File(io.BytesIO(ion_channel_recording_file), "r") as h5_handle:
@@ -101,7 +79,7 @@ def extract_ion_channel_recording_data(ion_channel_recording_file: bytes) -> Ion
         activation_dt = np.asarray(activation_repetition1_group["x_interval"], dtype=np.float32)
 
         return IonChannelRecordingData(
-            activation_current=activation_current, 
+            activation_current=activation_current,
             activation_dt=activation_dt,
         )
 
@@ -151,7 +129,9 @@ async def get_ion_channel_recording_preview(
     """
     try:
         # Get the ion_channel_recording file content
-        ion_channel_recording_file = await get_ion_channel_recording_content(entity_id, asset_id, context, auth)
+        ion_channel_recording_file = await get_ion_channel_recording_content(
+            entity_id, asset_id, context, auth
+        )
 
         # Extract data from the file
         ion_channel_recording_data = extract_ion_channel_recording_data(ion_channel_recording_file)
