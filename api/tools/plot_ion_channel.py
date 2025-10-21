@@ -100,7 +100,10 @@ def plot_nwb_ion_channel(data: IonChannelRecordingData):
             # We don't want any tick.
             ax.set_xticks([])
             ax.set_yticks([])
-
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax.spines["bottom"].set_visible(False)
+            ax.spines["left"].set_visible(False)
         figure = fig.figure
         figure.set_layout_engine("tight")
         return figure
