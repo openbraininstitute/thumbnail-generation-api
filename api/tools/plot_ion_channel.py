@@ -12,9 +12,11 @@ from http import HTTPStatus
 
 import matplotlib.pyplot as plt
 import numpy as np
-from palettable.cartocolors.sequential import TealGrn_7  # pyright: ignore
 from loguru import logger
 from numpy.typing import NDArray
+from palettable.cartocolors.sequential import (
+    TealGrn_7,  # pyright: ignore [reportAttributeAccessIssue]
+)
 
 # palettable.cartocolors.sequential.TealGrn_7 import mpl_colormap as colormap
 from api.core.api import ApiError, ApiErrorCode

@@ -74,8 +74,9 @@ make test
 Before any pull request, you can format and lint the code:
 
 ```sh
-uv run ruff format --check .
+uv run ruff format .
 make lint-fix
+make lint-all
 ```
 
 ## Acknowledgements
