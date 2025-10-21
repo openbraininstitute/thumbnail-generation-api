@@ -36,6 +36,7 @@ class EntityType(StrEnum):
     mesh = auto()
     cell_morphology = auto()
     electrical_cell_recording = auto()
+    ion_channel_recording = auto()
     single_neuron_simulation = auto()
     single_neuron_synaptome = auto()
     single_neuron_synaptome_simulation = auto()
