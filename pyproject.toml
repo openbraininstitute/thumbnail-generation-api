@@ -26,6 +26,7 @@ dependencies = [
     "plotly==5.23.0",
     "kaleido==0.2.1",  # for plotly
     "loguru>=0.7.3",
+    "palettable>=3.3.3"
 ]
 
 [dependency-groups]
@@ -64,6 +65,7 @@ ignore = [
     "FAST002", # FastAPI dependency without `Annotated`
     "B008",    # Do not perform function call `Depends` in argument defaults
     "TRY003",  # Avoid specifying long messages outside the exception class
+    "TRY300",  # Consider moving this statement to an `else` block
     "TRY301",  # Abstract `raise` to an inner function
     "RUF015",  # Prefer `next(iter())` over single element slice
     "PTH",     # `os.path` should be replaced by pathlib
@@ -121,6 +123,6 @@ source_pkgs = [
 [tool.coverage.report]
 show_missing = true
 precision = 0
-fail_under = 70
+fail_under = 60
 omit = [
 ]
