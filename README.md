@@ -9,6 +9,7 @@ The Thumbnail Generation API provides the service for generating thumbnails of m
 To get started with the Thumbnail Generation API, follow these simple steps:
 
 1. **Clone the repository:**
+
     ```sh
     git clone https://github.com/openbraininstitute/thumbnail-generation-api.git
     cd thumbnail-generation-api
@@ -17,20 +18,22 @@ To get started with the Thumbnail Generation API, follow these simple steps:
 2. **Install [uv](https://docs.astral.sh/uv/)**
 
 3. **Install the dependencies:**
+
     ```sh
     make install
     ```
 
 4. **Run the application:**
+
     ```sh
     make dev
     ```
 
 5. **Alternatively, run the application inside a Docker container:**
+
     ```sh
     make up
     ```
-
 
 Your Thumbnail Generation API should now be running at `http://127.0.0.1:8003`.
 
@@ -39,6 +42,7 @@ Your Thumbnail Generation API should now be running at `http://127.0.0.1:8003`.
 Here are some simple examples to get you started with using the Thumbnail Generation API:
 
 1. **Generate a thumbnail for electrophysiologies:**
+
     ```sh
     AUTH_TOKEN=xxxxxxxx
     ENTITY_ID=bdba2c48-df47-4bd9-bbfe-e4ec2c6a5abe
@@ -47,6 +51,7 @@ Here are some simple examples to get you started with using the Thumbnail Genera
     ```
 
 2. **Generate a thumbnail for morphologies:**
+
     ```sh
     AUTH_TOKEN=xxxxxxxx
     ENTITY_ID=059bd4df-acc5-4ec3-8203-53ceacd0e2e0
@@ -56,7 +61,6 @@ Here are some simple examples to get you started with using the Thumbnail Genera
 
 For more detailed usage and examples, please refer to the documentation available at `http://127.0.0.1:8003/docs`.
 
-
 ## Testing
 
 Tests can be run using the following command:
@@ -65,6 +69,15 @@ Tests can be run using the following command:
 make test
 ```
 
+## Publishing
+
+Before any pull request, you can format and lint the code:
+
+```sh
+uv run ruff format .
+make lint-fix
+make lint-all
+```
 
 ## Acknowledgements
 
