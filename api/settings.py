@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     whitelisted_cors_urls: list[str] = ["http://localhost:3000"]
+    cors_origin_regex: str | None = None
     base_path: str = ""
     environment: Environment = Environment.LOCAL
     sentry_dsn: str = ""
