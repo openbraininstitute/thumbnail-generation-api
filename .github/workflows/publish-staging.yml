@@ -6,6 +6,10 @@ on:
         - develop
     workflow_dispatch:
   
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish-to-aws-ecr:
     runs-on: ubuntu-latest
@@ -14,11 +18,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
-          aws-access-key-id: ${{ secrets.PUBLICECR_UPLOAD_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.PUBLICECR_UPLOAD_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.PUBLICECR_REGION }}
+          role-to-assume: arn:aws:iam::985539765147:role/gh_ecr_push_thumbnail-generation-api
+          aws-region: us-east-1
 
       - name: Authenticate with AWS Public ECR
         uses: aws-actions/amazon-ecr-login@v2
