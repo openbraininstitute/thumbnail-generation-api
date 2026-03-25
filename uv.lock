@@ -455,7 +455,7 @@ wheels = [
 
 [[package]]
 name = "neurom"
-version = "4.0.4"
+version = "4.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cached-property" },
@@ -468,10 +468,7 @@ dependencies = [
     { name = "scipy" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/80/18/54e068125ebbb529d2dc2eec0ecee68bc094450e415ec10c5b8a84ea7e82/neurom-4.0.4.tar.gz", hash = "sha256:2e44ee3fc6687d2cef5320585ed7fc5e9630157dce3f72f31a8afeed33d3c90d", size = 536681, upload-time = "2024-10-14T12:43:07.003Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f0/67/1dc2aeb33479d50c081bcea56048fc777262811299194665aaf54b9a0647/neurom-4.0.4-py3-none-any.whl", hash = "sha256:0e1cace405f4224a00d50de3848c93c6834d550fc7b24c9b32055c66e7c2c3e8", size = 110086, upload-time = "2024-10-14T12:43:05.263Z" },
-]
+sdist = { url = "https://files.pythonhosted.org/packages/64/c5/6b1f7d3dbd49cc4fc0935a598591658d084f40077841f74a25e249fb2d7f/neurom-4.0.5.tar.gz", hash = "sha256:bc22e535e9c78f1bbd7449a843f1babc9e15755a33bcc79ecafbe189b6626fa6", size = 536607, upload-time = "2026-03-24T09:25:43.412Z" }
 
 [[package]]
 name = "nodeenv"
@@ -1048,7 +1045,7 @@ requires-dist = [
     { name = "kaleido", specifier = "==0.2.1" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.7.4" },
-    { name = "neurom", specifier = ">=4.0.2" },
+    { name = "neurom", specifier = ">=4.0.5" },
     { name = "numpy", specifier = ">=2.1.0" },
     { name = "palettable", specifier = ">=3.3.3" },
     { name = "pillow", specifier = ">=10.3.0" },
