@@ -29,6 +29,14 @@ jobs:
         run: |
           docker build -t ${{ vars.PUBLICECR_URI }}:staging .
 
+      - uses: kitabisa/docker-slim-action@v1
+        env:
+          DSLIM_HTTP_PROBE: false
+        with:
+          target: ${{ vars.PUBLICECR_URI }}:staging
+          tag: "${{ vars.PUBLICECR_URI }}:staging-slim"
+
       - name: Publish To AWS ECR
         run: |
           docker push ${{ vars.PUBLICECR_URI }}:staging
+          docker push "${{ vars.PUBLICECR_URI }}:staging-slim"
