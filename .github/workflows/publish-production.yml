@@ -73,3 +73,5 @@ jobs:
           tags: ${{ vars.PUBLICECR_URI }}:${{ env.NEW_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
