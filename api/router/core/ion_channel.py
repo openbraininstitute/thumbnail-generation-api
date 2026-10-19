@@ -30,6 +30,8 @@ from api.http.entity_core import (
 from api.tools.plot_ion_channel import plot_nwb_ion_channel
 from api.types import IonChannelRecordingData
 from api.utils.common import get_buffer
+from api.utils.image_format import ImageFormat, media_type_for
+from api.utils.offload import run_blocking
 
 router = APIRouter(
     prefix="/ion-channel-recording",
@@ -84,12 +86,16 @@ def extract_ion_channel_recording_data(
         )
 
 
-def generate_plot(ion_channel_recording_data: IonChannelRecordingData, dpi: int | None) -> bytes:
+def generate_plot(
+    ion_channel_recording_data: IonChannelRecordingData,
+    dpi: int | None,
+    image_format: ImageFormat = ImageFormat.PNG,
+) -> bytes:
     """Generate a plot from the ion_channel_recording data."""
     fig = None
     try:
         fig = plot_nwb_ion_channel(ion_channel_recording_data)
-        buffer = get_buffer(fig, dpi)
+        buffer = get_buffer(fig, dpi, image_format)
         return buffer.getvalue()
     except Exception as ex:
         raise ApiError(
@@ -108,12 +114,13 @@ def generate_plot(ion_channel_recording_data: IonChannelRecordingData, dpi: int 
     dependencies=[Depends(require_bearer)],
     response_model=None,
 )
-async def get_ion_channel_recording_preview(
+async def get_ion_channel_recording_preview(  # noqa: PLR0913, PLR0917
     context: ProjectContextDep,
     auth: AuthDep,
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
-    dpi: int | None = Query(None, ge=10, le=600),
+    dpi: int | None = Query(300, ge=10, le=600),
+    image_format: ImageFormat = Query(ImageFormat.PNG, alias="format"),
 ) -> Response:
     """
     Generate a preview of an ion_channel_recording trace.
@@ -121,7 +128,8 @@ async def get_ion_channel_recording_preview(
     Args:
         entity_id: The ID of the entity
         asset_id: The ID of the asset
-        dpi: The DPI of the preview
+        dpi: The DPI of the preview (defaults to 300)
+        image_format: Output image format, "png" (default) or "webp"
         context: The context of the request
 
     Returns:
@@ -133,13 +141,17 @@ async def get_ion_channel_recording_preview(
             entity_id, asset_id, context, auth
         )
 
-        # Extract data from the file
-        ion_channel_recording_data = extract_ion_channel_recording_data(ion_channel_recording_file)
+        # Extract data from the file (HDF5 parsing is blocking, offloaded)
+        ion_channel_recording_data = await run_blocking(
+            extract_ion_channel_recording_data, ion_channel_recording_file
+        )
 
-        # Generate the plot
-        image_bytes = generate_plot(ion_channel_recording_data, dpi)
+        # Generate the plot (rendering is CPU-bound, offloaded)
+        image_bytes = await run_blocking(
+            generate_plot, ion_channel_recording_data, dpi, image_format
+        )
 
-        return Response(image_bytes, media_type="image/png")
+        return Response(image_bytes, media_type=media_type_for(image_format))
     except ContentEmpty as ex:
         L.error(f"ContentEmpty error while getting ion_channel_recording preview: {ex}")
         raise ApiError(

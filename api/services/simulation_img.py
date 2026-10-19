@@ -14,6 +14,7 @@ from api.models.common import (
     PlotTarget,
     SimulationConfiguration,
 )
+from api.utils.image_format import ImageFormat
 
 
 def generate_simulation_plots(
@@ -21,6 +22,7 @@ def generate_simulation_plots(
     target: PlotTarget,
     w: int | None,
     h: int | None,
+    image_format: ImageFormat = ImageFormat.PNG,
 ) -> bytes | None:
     """
     Creates plotly figure with data and layout
@@ -60,7 +62,7 @@ def generate_simulation_plots(
         buffer = io.BytesIO()
         fig.write_image(
             buffer,
-            format="png",
+            format=image_format.value,
             width=w,
             height=h,
         )

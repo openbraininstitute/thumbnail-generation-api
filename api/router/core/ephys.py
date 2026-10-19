@@ -32,6 +32,8 @@ from api.http.entity_core import (
 from api.models.enums import MetaType
 from api.tools.plot_ephys import plot_nwb_ephys
 from api.utils.common import get_buffer
+from api.utils.image_format import ImageFormat, media_type_for
+from api.utils.offload import run_blocking
 from api.utils.trace_img import (
     get_conversion,
     get_rate,
@@ -111,18 +113,20 @@ def extract_ephys_data(ephys_file: bytes) -> EphysData:  # noqa: PLR0914
         rate = get_rate(response_group)
         conversion = get_conversion(response_group)
 
-        # Retrieve and process the data
-        data = np.array(response_group["data"][:]) * conversion
+        # Retrieve and process the data (single copy via np.asarray)
+        data = np.asarray(response_group["data"], dtype=np.float64) * conversion
 
         return EphysData(data=data, unit=unit, rate=rate)
 
 
-def generate_plot(ephys_data: EphysData, dpi: int | None) -> bytes:
+def generate_plot(
+    ephys_data: EphysData, dpi: int | None, image_format: ImageFormat = ImageFormat.PNG
+) -> bytes:
     """Generate a plot from the ephys data."""
     fig = None
     try:
         fig = plot_nwb_ephys(ephys_data.data, ephys_data.unit, ephys_data.rate)
-        buffer = get_buffer(fig, dpi)
+        buffer = get_buffer(fig, dpi, image_format)
         return buffer.getvalue()
     except Exception as ex:
         raise ApiError(
@@ -141,12 +145,13 @@ def generate_plot(ephys_data: EphysData, dpi: int | None) -> bytes:
     dependencies=[Depends(require_bearer)],
     response_model=None,
 )
-async def get_ephys_preview(
+async def get_ephys_preview(  # noqa: PLR0913, PLR0917
     context: ProjectContextDep,
     auth: AuthDep,
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
-    dpi: int | None = Query(None, ge=10, le=600),
+    dpi: int | None = Query(300, ge=10, le=600),
+    image_format: ImageFormat = Query(ImageFormat.PNG, alias="format"),
 ) -> Response:
     """
     Generate a preview of an ephys trace.
@@ -154,7 +159,8 @@ async def get_ephys_preview(
     Args:
         entity_id: The ID of the entity
         asset_id: The ID of the asset
-        dpi: The DPI of the preview
+        dpi: The DPI of the preview (defaults to 300)
+        image_format: Output image format, "png" (default) or "webp"
         context: The context of the request
 
     Returns:
@@ -164,13 +170,13 @@ async def get_ephys_preview(
         # Get the ephys file content
         ephys_file = await get_ephys_content(entity_id, asset_id, context, auth)
 
-        # Extract data from the file
-        ephys_data = extract_ephys_data(ephys_file)
+        # Extract data from the file (HDF5 parsing is blocking, offloaded)
+        ephys_data = await run_blocking(extract_ephys_data, ephys_file)
 
-        # Generate the plot
-        image_bytes = generate_plot(ephys_data, dpi)
+        # Generate the plot (rendering is CPU-bound, offloaded)
+        image_bytes = await run_blocking(generate_plot, ephys_data, dpi, image_format)
 
-        return Response(image_bytes, media_type="image/png")
+        return Response(image_bytes, media_type=media_type_for(image_format))
     except ContentEmpty as ex:
         L.error(f"ContentEmpty error while getting ephys preview: {ex}")
         raise ApiError(
