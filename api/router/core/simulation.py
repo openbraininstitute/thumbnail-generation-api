@@ -9,7 +9,7 @@ from enum import StrEnum
 from http import HTTPStatus as status  # noqa: N813
 from typing import Literal, cast
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Query, Response
 from fastapi.security import HTTPBearer
 from loguru import logger as L  # noqa: N812
 
@@ -23,6 +23,8 @@ from api.http.entity_core import (
 )
 from api.models.common import PlotTarget
 from api.services.simulation_img import generate_simulation_plots
+from api.utils.image_format import ImageFormat, media_type_for
+from api.utils.offload import run_blocking
 
 router = APIRouter()
 require_bearer = HTTPBearer()
@@ -48,6 +50,7 @@ async def get_simulation_plot(  # noqa: PLR0913, PLR0917
     auth: AuthDep,
     w: int | None = None,
     h: int | None = None,
+    image_format: ImageFormat = Query(ImageFormat.PNG, alias="format"),
 ) -> Response:
     """
     Generate a preview of a simulation
@@ -82,18 +85,21 @@ async def get_simulation_plot(  # noqa: PLR0913, PLR0917
             )
             simulation_file = await core_client.get_asset_content(download_url, as_type="str")
 
-            image = generate_simulation_plots(
+            # Plotly + kaleido rasterization is blocking; run off the event loop.
+            image = await run_blocking(
+                generate_simulation_plots,
                 config_file_content=simulation_file,
                 w=w,
                 h=h,
                 target=target,
+                image_format=image_format,
             )
             if image is None:
                 raise HTTPException(
                     status_code=status.NOT_FOUND,
                     detail="Simulation results data not found",
                 )
-        return Response(image, media_type="image/png")
+        return Response(image, media_type=media_type_for(image_format))
     except ValueError as exc:
         raise HTTPException(status.BAD_GATEWAY, "Simulation config file is malformed") from exc
     except ContentEmpty as ex:

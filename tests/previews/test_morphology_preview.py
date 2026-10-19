@@ -41,6 +41,99 @@ def test_morphology_preview_success(
 
 
 @patch("api.router.core.morphology.get_entitycore_client")
+def test_morphology_preview_webp_format(
+    mock_get_entitycore_client,
+    client: TestClient,
+    mock_headers,
+    mock_entity_id,
+    mock_asset_id,
+    mock_morphology_content,
+):
+    """Test preview generation with format=webp returns a WebP image"""
+    mock_client = AsyncMock()
+    mock_client.get_asset_download_url = AsyncMock(return_value="http://example.com/download")
+    mock_client.get_asset_content = AsyncMock(return_value=mock_morphology_content)
+
+    mock_context = AsyncMock()
+    mock_context.__aenter__.return_value = mock_client
+    mock_context.__aexit__.return_value = None
+    mock_get_entitycore_client.return_value = mock_context
+
+    response = client.get(
+        "/core/cell-morphology/preview",
+        headers=mock_headers,
+        params={
+            "entity_id": str(mock_entity_id),
+            "asset_id": str(mock_asset_id),
+            "dpi": 300,
+            "format": "webp",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/webp"
+    # WebP files start with the RIFF magic bytes followed by "WEBP".
+    assert response.content[:4] == b"RIFF"
+    assert response.content[8:12] == b"WEBP"
+
+
+@patch("api.router.core.morphology.get_entitycore_client")
+def test_morphology_preview_png_default_format(
+    mock_get_entitycore_client,
+    client: TestClient,
+    mock_headers,
+    mock_entity_id,
+    mock_asset_id,
+    mock_morphology_content,
+):
+    """Test that omitting format defaults to PNG (backward compatible)"""
+    mock_client = AsyncMock()
+    mock_client.get_asset_download_url = AsyncMock(return_value="http://example.com/download")
+    mock_client.get_asset_content = AsyncMock(return_value=mock_morphology_content)
+
+    mock_context = AsyncMock()
+    mock_context.__aenter__.return_value = mock_client
+    mock_context.__aexit__.return_value = None
+    mock_get_entitycore_client.return_value = mock_context
+
+    response = client.get(
+        "/core/cell-morphology/preview",
+        headers=mock_headers,
+        params={
+            "entity_id": str(mock_entity_id),
+            "asset_id": str(mock_asset_id),
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    # PNG magic bytes.
+    assert response.content[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+@patch("api.router.core.morphology.get_entitycore_client")
+def test_morphology_preview_invalid_format(
+    mock_get_entitycore_client,
+    client: TestClient,
+    mock_headers,
+    mock_entity_id,
+    mock_asset_id,
+):
+    """Test that an unsupported format value is rejected with 422"""
+    response = client.get(
+        "/core/cell-morphology/preview",
+        headers=mock_headers,
+        params={
+            "entity_id": str(mock_entity_id),
+            "asset_id": str(mock_asset_id),
+            "format": "gif",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+@patch("api.router.core.morphology.get_entitycore_client")
 def test_morphology_preview_without_dpi(
     mock_get_entitycore_client,
     client: TestClient,

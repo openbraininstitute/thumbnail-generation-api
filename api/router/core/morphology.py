@@ -26,6 +26,8 @@ from api.http.entity_core import (
 )
 from api.tools.plot_morphology import plot_morphology
 from api.utils.common import get_buffer
+from api.utils.image_format import ImageFormat, media_type_for
+from api.utils.offload import run_blocking
 
 router = APIRouter(
     prefix="/cell-morphology",
@@ -38,12 +40,13 @@ require_bearer = HTTPBearer()
     dependencies=[Depends(require_bearer)],
     response_model=None,
 )
-async def get_morphology_preview(
+async def get_morphology_preview(  # noqa: PLR0913, PLR0917
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
     context: ProjectContextDep,
     auth: AuthDep,
-    dpi: int | None = Query(None, ge=10, le=600),
+    dpi: int | None = Query(300, ge=10, le=600),
+    image_format: ImageFormat = Query(ImageFormat.PNG, alias="format"),
 ) -> Response:
     """
     Generate a preview of a morphology
@@ -51,7 +54,8 @@ async def get_morphology_preview(
     Args:
         entity_id: The ID of the entity
         asset_id: The ID of the asset
-        dpi: The DPI of the preview
+        dpi: The DPI of the preview (defaults to 300)
+        image_format: Output image format, "png" (default) or "webp"
         context: The context of the request
 
     Returns:
@@ -73,8 +77,10 @@ async def get_morphology_preview(
             )
             morphology_file = await core_client.get_asset_content(download_url, as_type="str")
 
-        # Load the morphology from the downloaded content
-        morphology = nm.load_morphology(io.StringIO(morphology_file), reader="swc")
+        # Load the morphology from the downloaded content (CPU-bound, offloaded)
+        morphology = await run_blocking(
+            nm.load_morphology, io.StringIO(morphology_file), reader="swc"
+        )
     except ContentEmpty as ex:
         L.error(f"ContentEmpty error while getting morphology preview: {ex}")
         raise ApiError(
@@ -94,14 +100,16 @@ async def get_morphology_preview(
         ) from ex
 
     try:
-        # Generate the buffer for the image
-        fig = plot_morphology(morphology)
-        buffer = get_buffer(fig, dpi)
+        # Generate the image (plotting + rasterization) off the event loop.
+        def render() -> bytes:
+            fig = plot_morphology(morphology)
+            try:
+                return get_buffer(fig, dpi, image_format).getvalue()
+            finally:
+                plt.close(fig)
 
-        # Convert buffer to bytes
-        image_bytes = buffer.getvalue()
-        plt.close(fig)
-        return Response(image_bytes, media_type="image/png")
+        image_bytes = await run_blocking(render)
+        return Response(image_bytes, media_type=media_type_for(image_format))
     except Exception as ex:
         raise ApiError(
             message="Morphology preview generation failed",

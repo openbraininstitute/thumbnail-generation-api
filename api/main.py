@@ -10,12 +10,36 @@ import sentry_sdk
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from loguru import logger as L  # noqa: N812
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
 from api.core.api import ApiError
 from api.router import generate, health, swc
 from api.router.core import core_router
 from api.settings import settings
+
+
+def _warmup_matplotlib() -> None:
+    """Force matplotlib's font cache build and Agg backend initialization.
+
+    The first figure rendered in a fresh process pays a one-off cost (font
+    cache construction, backend import, C-extension initialization). Doing a
+    throwaway render at startup moves that cost off the first real request
+    after a (re)deploy, where only a single task serves traffic.
+    """
+    try:
+        import matplotlib.pyplot as plt  # noqa: PLC0415
+
+        fig, ax = plt.subplots()
+        ax.plot([0, 1], [0, 1])
+        import io  # noqa: PLC0415
+
+        fig.savefig(io.BytesIO(), format="png")
+        plt.close(fig)
+        L.info("matplotlib warmup render completed")
+    except Exception as exc:  # noqa: BLE001
+        L.warning(f"matplotlib warmup render failed (non-fatal): {exc}")
+
 
 tags_metadata = [
     {
@@ -49,6 +73,11 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
             profiles_sample_rate=settings.sentry_profiles_sample_rate,
             environment=settings.environment,
         )
+
+    # Pre-warm matplotlib so the first preview request doesn't pay the
+    # cold-render / font-cache penalty.
+    _warmup_matplotlib()
+
     yield
 
 
