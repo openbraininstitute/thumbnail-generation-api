@@ -78,6 +78,20 @@ known-local-folder = ["tests"]
 combine-as-imports = true
 
 [tool.ruff.lint.per-file-ignores]
+"scripts/**.py" = [
+    "ANN",     # Missing type annotation
+    "ARG002",  # Unused method argument (mock signatures)
+    "E402",    # Module import not at top (sys.path / logging setup first)
+    "FBT001",  # Boolean-typed positional argument
+    "FBT003",  # Boolean positional value in call
+    "INP001",  # Missing `__init__.py` (standalone tooling script)
+    "PLR0913", # Too many arguments in function definition
+    "PLR0917", # Too many positional arguments
+    "PLR6301", # Method could be static (mock methods)
+    "PLW0108", # Lambda may be unnecessary
+    "RUF100",  # Unused noqa (annotation noqas not enabled here)
+    "T201",    # `print` found (benchmark output)
+]
 "tests/**.py" = [
     "ANN",     # Missing type annotation
     "ARG001",  # Unused function argument
