@@ -119,7 +119,7 @@ async def get_ion_channel_recording_preview(  # noqa: PLR0913, PLR0917
     auth: AuthDep,
     entity_id: uuid.UUID,
     asset_id: uuid.UUID,
-    dpi: int | None = Query(300, ge=10, le=600),
+    dpi: int | None = Query(None, ge=10, le=600),
     image_format: ImageFormat = Query(ImageFormat.PNG, alias="format"),
 ) -> Response:
     """
@@ -128,7 +128,7 @@ async def get_ion_channel_recording_preview(  # noqa: PLR0913, PLR0917
     Args:
         entity_id: The ID of the entity
         asset_id: The ID of the asset
-        dpi: The DPI of the preview (defaults to 300)
+        dpi: The DPI of the preview (defaults to matplotlib's native resolution when omitted)
         image_format: Output image format, "png" (default) or "webp"
         context: The context of the request
 
