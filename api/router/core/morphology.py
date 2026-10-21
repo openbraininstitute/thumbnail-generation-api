@@ -10,7 +10,6 @@ import io
 import uuid
 from http import HTTPStatus as status  # noqa: N813
 
-import matplotlib.pyplot as plt
 import neurom as nm
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.security import HTTPBearer
@@ -103,10 +102,7 @@ async def get_morphology_preview(  # noqa: PLR0913, PLR0917
         # Generate the image (plotting + rasterization) off the event loop.
         def render() -> bytes:
             fig = plot_morphology(morphology)
-            try:
-                return get_buffer(fig, dpi, image_format).getvalue()
-            finally:
-                plt.close(fig)
+            return get_buffer(fig, dpi, image_format).getvalue()
 
         image_bytes = await run_blocking(render)
         return Response(image_bytes, media_type=media_type_for(image_format))

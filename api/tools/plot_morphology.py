@@ -6,7 +6,9 @@ Module: plot_morphology.py
 This module provides functionality for plotting neuronal morphology data using matplotlib.
 """
 
-from neurom.view import matplotlib_impl, matplotlib_utils
+from neurom.view import matplotlib_impl
+
+from api.utils.figure import new_figure
 
 
 def plot_morphology(morphology):
@@ -18,7 +20,7 @@ def plot_morphology(morphology):
     Returns:
         The matplotlib figure
     """
-    fig, ax = matplotlib_utils.get_figure()
+    fig, ax = new_figure()
 
     matplotlib_impl.plot_morph(morphology, ax)
 

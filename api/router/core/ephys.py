@@ -12,7 +12,6 @@ from http import HTTPStatus as status  # noqa: N813
 from typing import cast
 
 import h5py
-import matplotlib.pyplot as plt
 import numpy as np
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.security import HTTPBearer
@@ -123,7 +122,6 @@ def generate_plot(
     ephys_data: EphysData, dpi: int | None, image_format: ImageFormat = ImageFormat.PNG
 ) -> bytes:
     """Generate a plot from the ephys data."""
-    fig = None
     try:
         fig = plot_nwb_ephys(ephys_data.data, ephys_data.unit, ephys_data.rate)
         buffer = get_buffer(fig, dpi, image_format)
@@ -135,9 +133,6 @@ def generate_plot(
             error_code=ApiErrorCode.BUFFERING_ERROR,
             http_status_code=status.BAD_REQUEST,
         ) from ex
-    finally:
-        if fig:
-            plt.close(fig)
 
 
 @router.get(

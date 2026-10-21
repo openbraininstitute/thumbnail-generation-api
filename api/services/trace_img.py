@@ -10,13 +10,13 @@ import io
 from typing import Any, cast
 
 import h5py
-import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
 from api.models.enums import MetaType
 from api.services.nexus import fetch_file_content
 from api.utils.common import get_buffer
+from api.utils.figure import new_figure
 from api.utils.trace_img import (
     get_conversion,
     get_rate,
@@ -65,7 +65,7 @@ def plot_nwb(data: NDArray[Any], unit: str, rate: Num):
     figsize = (6, 4)
     fontsize = 16
 
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = new_figure(figsize=figsize)
     ax.tick_params(labelsize=fontsize)
     ax.plot(timestamps, data, color="black")
     ax.set_xlabel(xunit, fontsize=fontsize)
@@ -118,13 +118,8 @@ def generate_electrophysiology_image(
     # Generate the plot using the data
     fig = plot_nwb(data, unit, rate)
 
-    try:
-        # Convert the figure to a byte buffer
-        buffer = get_buffer(fig, dpi)
-    finally:
-        # Ensure the figure is closed to free up resources
-
-        plt.close(fig)
+    # Convert the figure to a byte buffer
+    buffer = get_buffer(fig, dpi)
 
     # Return the image as bytes
     return buffer.getvalue()

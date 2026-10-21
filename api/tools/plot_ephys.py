@@ -6,9 +6,10 @@ This module exposes the business logic for generating trace thumbnails
 
 from typing import Any, cast
 
-import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
+
+from api.utils.figure import new_figure
 
 
 def plot_nwb_ephys(data: NDArray[Any], unit: str, rate: float):
@@ -47,7 +48,7 @@ def plot_nwb_ephys(data: NDArray[Any], unit: str, rate: float):
     figsize = (6, 4)
     fontsize = 16
 
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = new_figure(figsize=figsize)
     ax.tick_params(labelsize=fontsize)
     ax.plot(timestamps, data, color="black")
     ax.set_xlabel(xunit, fontsize=fontsize)

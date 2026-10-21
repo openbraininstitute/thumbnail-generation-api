@@ -26,16 +26,18 @@ def _warmup_matplotlib() -> None:
     cache construction, backend import, C-extension initialization). Doing a
     throwaway render at startup moves that cost off the first real request
     after a (re)deploy, where only a single task serves traffic.
+
+    Uses the object-oriented Figure API (no pyplot) to match the render paths,
+    which must stay thread-safe under the offloaded worker threadpool.
     """
     try:
-        import matplotlib.pyplot as plt  # noqa: PLC0415
-
-        fig, ax = plt.subplots()
-        ax.plot([0, 1], [0, 1])
         import io  # noqa: PLC0415
 
+        from api.utils.figure import new_figure  # noqa: PLC0415
+
+        fig, ax = new_figure()
+        ax.plot([0, 1], [0, 1])
         fig.savefig(io.BytesIO(), format="png")
-        plt.close(fig)
         L.info("matplotlib warmup render completed")
     except Exception as exc:  # noqa: BLE001
         L.warning(f"matplotlib warmup render failed (non-fatal): {exc}")
