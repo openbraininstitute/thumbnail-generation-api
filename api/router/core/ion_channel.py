@@ -11,7 +11,6 @@ from http import HTTPStatus as status  # noqa: N813
 from typing import cast
 
 import h5py
-import matplotlib.pyplot as plt
 import numpy as np
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.security import HTTPBearer
@@ -92,7 +91,6 @@ def generate_plot(
     image_format: ImageFormat = ImageFormat.PNG,
 ) -> bytes:
     """Generate a plot from the ion_channel_recording data."""
-    fig = None
     try:
         fig = plot_nwb_ion_channel(ion_channel_recording_data)
         buffer = get_buffer(fig, dpi, image_format)
@@ -104,9 +102,6 @@ def generate_plot(
             error_code=ApiErrorCode.BUFFERING_ERROR,
             http_status_code=status.BAD_REQUEST,
         ) from ex
-    finally:
-        if fig:
-            plt.close(fig)
 
 
 @router.get(

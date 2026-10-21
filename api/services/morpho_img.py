@@ -6,12 +6,12 @@ This module exposes the business logic for generating morphology thumbnails
 
 import io
 
-import matplotlib.pyplot as plt
 import neurom as nm
-from neurom.view import matplotlib_impl, matplotlib_utils
+from neurom.view import matplotlib_impl
 
 from api.services.nexus import fetch_file_content
 from api.utils.common import get_buffer
+from api.utils.figure import new_figure
 
 
 def plot_morphology(morphology):
@@ -23,7 +23,7 @@ def plot_morphology(morphology):
     Returns:
         The matplotlib figure
     """
-    fig, ax = matplotlib_utils.get_figure()
+    fig, ax = new_figure()
 
     matplotlib_impl.plot_morph(morphology, ax)
 
@@ -60,15 +60,10 @@ def generate_morphology_image(
 
     fig = plot_morphology(morphology)
 
-    try:
-        # Generate the buffer for the image
-        buffer = get_buffer(fig, dpi)
+    # Generate the buffer for the image
+    buffer = get_buffer(fig, dpi)
 
-        # Convert buffer to bytes
-        image_bytes = buffer.getvalue()
-
-    finally:
-        # Explicitly close the figure to release memory
-        plt.close(fig)
+    # Convert buffer to bytes
+    image_bytes = buffer.getvalue()
 
     return image_bytes

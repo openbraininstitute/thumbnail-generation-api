@@ -10,7 +10,6 @@ them from messing up the global scale of the plot.
 import statistics
 from http import HTTPStatus
 
-import matplotlib.pyplot as plt
 import numpy as np
 from loguru import logger
 from numpy.typing import NDArray
@@ -21,6 +20,7 @@ from palettable.cartocolors.sequential import (
 # palettable.cartocolors.sequential.TealGrn_7 import mpl_colormap as colormap
 from api.core.api import ApiError, ApiErrorCode
 from api.types import IonChannelRecordingData
+from api.utils.figure import new_figure
 
 
 def get_line_number(ex: Exception):
@@ -93,7 +93,7 @@ def plot_nwb_ion_channel(data: IonChannelRecordingData):
         data_x = np.arange(npoints)
         nb_traces = data_y.shape[1]
         figsize = (6, 4)
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = new_figure(figsize=figsize)
         for trace_index in range(nb_traces):
             trace = remove_artifacts(data_y, trace_index)
             ax.plot(data_x, trace, color=colormap(trace_index / (nb_traces - 1)), linewidth=0.5)
