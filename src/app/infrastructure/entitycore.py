@@ -1,15 +1,7 @@
-"""The entitycore adapter over HTTP (implements ``application.ports.EntityCore``).
+"""entitycore over HTTP (implements ``application.ports.EntityCore``).
 
-One ``httpx2.AsyncClient`` per process, made in the app lifespan: connections to entitycore and
-to the storage are kept alive and reused (the old service opened a new client, so a new TCP and
-TLS handshake, on every request).
-
-Every entitycore call carries the caller's token and project headers: entitycore applies its
-own rule (public, or in one of the caller's projects). This adapter never decides access.
-
-Errors are translated once, here, with one table (spec 06 C-E5): a 401, 403, 404, 409 or 4xx
-from entitycore keeps its meaning; a timeout, a network failure, a 429 or a 5xx is
-``ENTITYCORE_UNAVAILABLE`` (503, the caller may retry).
+One pooled client per process. Every call carries the caller's token; entitycore decides access.
+Its 4xx keep their meaning; a timeout, network error, 429 or 5xx is ``ENTITYCORE_UNAVAILABLE``.
 """
 
 import time
@@ -27,7 +19,7 @@ from app.logs import get_logger
 
 log = get_logger("http.entitycore")
 
-THUMBNAIL_VALIDATION = "thumbnail"  # the validation result that holds a model's trace image
+THUMBNAIL_VALIDATION = "thumbnail"  # validation result holding a model's trace
 MODEL_TRACE_MEDIA_TYPE = "image/png"
 REDIRECTS = frozenset({301, 302, 303, 307, 308})
 
@@ -114,14 +106,14 @@ class HttpEntityCore:
         location = require(
             response.headers.get("location"), ErrorCode.ContentEmpty, "No download location"
         )
-        # Only a web URL is followed: a file://, ftp:// or other location is not a storage link.
+        # Follow only a web URL, never file:// or similar.
         ensure(
             location.startswith(("https://", "http://")), lambda: unavailable(ValueError(location))
         )
         chunks: list[bytes] = []
         total = 0
         try:
-            # No Authorization header: the URL is presigned (and storage refuses two auths).
+            # No Authorization: the URL is presigned (storage refuses two auths).
             async with self._client.stream("GET", location) as stored:
                 status = stored.status_code
                 ensure(stored.is_success, lambda: refused(status, ErrorCode.ContentEmpty, "File"))
@@ -189,7 +181,7 @@ class HttpEntityCore:
             match_error(error, {httpx2.HTTPError: unavailable})
         log.debug(
             "http request",
-            path=path,  # never the query string or a redirect location: they can carry data
+            path=path,  # never the query or a redirect URL: they can hold data
             status=response.status_code,
             duration_ms=round((time.perf_counter() - started) * 1000, 2),
         )

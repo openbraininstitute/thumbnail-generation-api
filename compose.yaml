@@ -1,7 +1,4 @@
-# The service as production runs it, plus a cache dashboard: `make up`.
-#   http://localhost:${API_PORT}/docs   the API, through nginx and its cache (as in AWS)
-#   http://localhost:${CACHE_UI_PORT}   the cache dashboard: HIT / MISS per request, top images
-# Settings: .env (cp .env.example .env). Compose also reads it for the ${...} values below.
+# `make up`: the service as in production, plus a cache dashboard. Settings: .env.
 name: thumbnail
 
 services:
@@ -13,7 +10,7 @@ services:
     env_file:
       - path: .env
         required: false
-    read_only: true # as the ECS task (readonlyRootFilesystem), with its writable volumes:
+    read_only: true # as in ECS, with the same writable folders:
     tmpfs:
       - /tmp
       - /var/cache/nginx
@@ -21,12 +18,10 @@ services:
       - /var/run
       - /var/cache/fontconfig
     volumes:
-      - ./nginx/local:/etc/nginx/local.d:ro # local only: the access log GoAccess reads
+      - ./nginx/local:/etc/nginx/local.d:ro # the access log GoAccess reads
       - nginx-log:/var/log/nginx-local
     restart: unless-stopped
-    # `make watch`: develop with the stack up. A change here rebuilds the image (the dependency layer is
-    # cached; about 40 s, measured) and replaces the container. A rebuild, not a
-    # file sync: the app is installed in the image and the root is read-only, as in production.
+    # `make watch`: a change rebuilds the image (about 40 s) and replaces the container.
     develop:
       watch:
         - {action: rebuild, path: ./src, ignore: ["**/__pycache__/"]}
@@ -39,14 +34,12 @@ services:
         - {action: rebuild, path: ./Dockerfile}
         - {action: rebuild, path: ./.env}
 
-  # Reads nginx's access log as it grows and writes a live HTML report (GoAccess, open source:
-  # https://goaccess.io). Its "Cache Status" panel counts HIT, MISS, BYPASS; "Requested Files"
-  # lists each image URL with its hits.
+  # Live HTML report of nginx's access log (https://goaccess.io): cache HIT, MISS, BYPASS.
   goaccess:
     image: allinurl/goaccess:1.10.2
     depends_on:
       api:
-        condition: service_healthy # nginx has created the log file by then
+        condition: service_healthy # the log file exists by then
     volumes:
       - nginx-log:/logs:ro
       - cache-report:/report
@@ -62,7 +55,7 @@ services:
       - --html-report-title=Thumbnail cache
     restart: unless-stopped
 
-  # Serves the report and its live updates on one port of the laptop.
+  # Serves the report on one local port.
   cache-ui:
     image: nginx:1.29.3-alpine
     depends_on: [goaccess]

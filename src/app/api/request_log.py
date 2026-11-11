@@ -1,10 +1,7 @@
-"""One structured line per HTTP request, and a ``request_id`` on every line logged during it.
+"""One log line per HTTP request, and its ``request_id`` (``X-Request-ID``) on every line.
 
-From workspace-manager ``api/request_log.py``. A pure ASGI middleware, not
-``BaseHTTPMiddleware`` (that one runs the app in another task, so the bound ``request_id``
-would not reach the handlers, and it buffers the response). Costs one dict lookup and one log
-call per request. The id comes from the caller (``X-Request-ID``) when it is a plain token,
-else a new one; it goes back in the same header so a client can quote it.
+Pure ASGI, not ``BaseHTTPMiddleware``: that one runs the app in another task, so the bound id would
+not reach the handlers.
 """
 
 import re
@@ -57,8 +54,7 @@ class RequestLog:
             nonlocal status
             if message["type"] == "http.response.start":
                 status = message["status"]
-                # Sent with the headers: the body is built by then (every route answers whole),
-                # so "app" is the time the app spent, short of writing the bytes.
+                # Every route answers whole, so the body is built by now: "app" is the app's time.
                 elapsed = (time.perf_counter() - started) * 1000
                 timing = timings.header(phases, elapsed).encode()
                 message["headers"] = [

@@ -1,10 +1,6 @@
-"""The preview use cases, in two steps: plan (read the asset's metadata) and draw.
+"""Preview use cases: ``plan`` reads the asset's metadata (ETag, size); ``draw`` renders it.
 
-``plan`` reads the asset's metadata from entitycore with the caller's token: its sha256 makes the
-ETag, its size is checked before any download. ``draw`` downloads the file and renders it on a
-worker thread, at most ``RENDER_CONCURRENCY`` at a time per process. Behind nginx both run only on
-a cache miss (``nginx/nginx.conf``). Access is not checked here (planned next): entitycore refuses
-a caller who may not read the asset.
+Both run only on an nginx cache miss. entitycore decides access.
 """
 
 import time
@@ -55,13 +51,7 @@ class Plan(Value):
 
 
 def _timed(render: Render, content: bytes, spec: RenderSpec, queued: float) -> bytes:
-    """Run ``render`` on its worker thread, timing the wait and the drawing as two phases.
-
-    ``render_wait``: from ``queued`` to the first line here, the wait for a render slot. ``render``:
-    the drawing alone. Measured in the thread (anyio runs it in a copy of the request's context,
-    so the phases reach the request's collector): one phase for both could not tell a busy
-    process from a slow drawing.
-    """
+    """Run ``render``, timing the wait for a slot (``render_wait``) and the drawing (``render``)."""
     record("render_wait", queued)
     with phase("render"):
         return render(content, spec)
@@ -71,11 +61,7 @@ class Previews:
     """The preview use cases over one entitycore port."""
 
     def __init__(self, entitycore: EntityCore, *, concurrency: int, admission: Admission) -> None:
-        """Wire the use cases.
-
-        ``concurrency`` bounds the renders running at once (CPU); ``admission`` bounds the files
-        held in memory and the downloads in flight (application/admission.py).
-        """
+        """``concurrency``: renders at once; ``admission``: memory and downloads in flight."""
         self._entitycore = entitycore
         self._limiter = anyio.CapacityLimiter(concurrency)
         self._admission = admission

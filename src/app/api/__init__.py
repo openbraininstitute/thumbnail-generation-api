@@ -1,1 +1,1 @@
-"""HTTP adapters only: parse the request, call one use case, map the result (spec 06 C-L3)."""
+"""HTTP adapters: parse the request, call one use case, map the result."""

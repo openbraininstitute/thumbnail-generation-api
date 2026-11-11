@@ -1,13 +1,6 @@
-"""Typed guards: one way to state a rule and its error (Guard Clause pattern).
+"""Guard clauses (from workspace-manager): ``ensure``, ``require`` and ``match_error``.
 
-The subset of workspace-manager ``domain/guards.py`` this service uses, unchanged:
-
-* :func:`ensure` replaces ``if not condition: raise …``.
-* :func:`require` does the same for a value that must exist, and narrows ``T | None`` to ``T``.
-* :func:`match_error` maps an error to an outcome with a table: one ``except`` per edge
-  (spec 06 C-E5).
-
-The error is built only when the guard fails, so the normal path allocates nothing.
+The error is built only when a guard fails.
 """
 
 from collections.abc import Callable, Mapping
@@ -102,18 +95,10 @@ def match_error[R](
 def match_error[R](
     error: BaseException, handlers: Mapping[type[BaseException], Callable[[Any], R]]
 ) -> R:
-    """Map an error to an outcome with a table: one ``except`` per edge (spec 06 C-E5).
+    """Map an error to an outcome with a table of handlers, tried in order.
 
-    Handlers are tried in the table's order; the first whose class matches
-    (``isinstance``, so put a subclass before its base) is called with the
-    error. A handler that returns an exception has it raised ``from`` the
-    original; any other result is returned (await it when the handlers are
-    coroutines). An error no handler matches is re-raised unchanged: nothing
-    is swallowed. Handlers are functions, so only the matching one builds
-    its response. When every handler returns an exception the call is typed
-    ``NoReturn``, so the type checker knows the code after it is not reached.
-
-    From workspace-manager ``domain/guards.py``, unchanged.
+    The first matching class wins (put a subclass before its base). A returned exception is
+    raised ``from`` the original; any other result is returned. Unmatched: re-raised.
 
     Raises:
         BaseException: The handler's exception, or ``error`` itself when unmatched.

@@ -1,22 +1,8 @@
-"""Structured logging: one flat JSON line per event, pretty on a terminal.
+"""Structured logging (structlog): one JSON line per event, pretty on a terminal.
 
-Copied from workspace-manager ``logs.py`` (its choice of structlog is measured there: a JSON line
-of four fields costs 4.4 µs, a call below the level 0.3 µs). Context is bound, not passed
-(``bind(request_id=…)``); the standard library's records (granian, httpx2, matplotlib) go through
-the same processors, so CloudWatch sees one shape.
-
-JSON shape::
-
-    {"timestamp":"2026-11-10T10:00:00.123456Z","level":"INFO","message":"request",
-     "logger":"api.request","request_id":"…","method":"GET","path":"/core/…","status":200,
-     "duration_ms":12.5,"service":"thumbnail-generation-api","component":"api","env":"production"}
-
-Scopes (``LOG_DEBUG``): ``get_logger("http.entitycore")``; ``LOG_DEBUG=*`` makes every scope speak
-at DEBUG, ``LOG_DEBUG=http,render`` only those, ``LOG_DEBUG=*,-api.request`` all but one; every
-other scope keeps its warnings and errors. Unset, ``LOG_LEVEL`` rules.
-
-Rules: a short constant ``message``, the data in fields (never an f-string), no secrets
-(:data:`SECRET_KEYS` are replaced), never a query string or a presigned URL.
+Context is bound, not passed (``bind(request_id=…)``); library records go through the same
+processors. ``LOG_DEBUG`` sets DEBUG for some scopes: ``*``, ``http,render``, ``*,-api.request``.
+Rules: a short constant ``message``, data in fields, no secrets, no query strings or presigned URLs.
 """
 
 import json
@@ -54,8 +40,7 @@ NOISY = (
     "PIL",
     "kaleido",
 )
-"""Libraries that log a line per call at INFO; they speak only from WARNING up (their logger
-and every child: SQLAlchemy and alembic set levels on the children and on ``sqlalchemy``)."""
+"""Libraries that log a line per call at INFO; they speak only from WARNING up."""
 
 _LEVEL_NAMES = {"exception": "ERROR", "warn": "WARNING", "fatal": "CRITICAL", "msg": "INFO"}
 _HANDLER_MARK = "_thumbnail_generation"
@@ -64,10 +49,8 @@ _HANDLER_MARK = "_thumbnail_generation"
 class _NamedPrintLogger(structlog.PrintLogger):
     """A ``PrintLogger`` that knows its name and writes each line with one ``write``.
 
-    structlog's ``print(message)`` makes two writes (the text, then the newline). nginx and two
-    granian workers share the container's stdout (supervisord.conf), so another process's line
-    could land between them and join two JSON objects on one line, which a log shipper cannot
-    parse (found by tests/image/e2e_nginx.py). One write of a line under 4 KiB is atomic on a pipe.
+    nginx and two granian workers share stdout: two writes per line let lines of different
+    processes merge. One write under 4 KiB is atomic on a pipe.
     """
 
     name = ""
@@ -98,10 +81,7 @@ class _PrintFactory:
 def get_logger(name: str) -> FilteringBoundLogger:
     """A logger that adds ``logger=<name>`` to its lines; use ``get_logger(__name__)``.
 
-    Lazy: it can be created at import time, before :func:`configure_logging` ran, and takes
-    the configuration on its first line. (``get_logger().bind(…)`` would not: ``bind`` on the
-    lazy proxy builds a real logger on the spot, with the default processors.) The name goes
-    to the logger factory, and :func:`_logger_name` writes it as the ``logger`` field.
+    Lazy: safe at import time, it takes the configuration on its first line.
     """
     return structlog.get_logger(name)
 
@@ -110,8 +90,7 @@ def get_logger(name: str) -> FilteringBoundLogger:
 def bind(**fields: object) -> Generator[None]:
     """Add ``fields`` to every log line logged inside the block, then take them off again.
 
-    Blocks nest (a child workflow inside a run). Use it for what identifies the work: a run, a
-    step, a request.
+    Blocks nest. Use it for what identifies the work, such as a request.
     """
     with bound_contextvars(**fields):
         yield
@@ -132,8 +111,8 @@ def configure_logging(
     Args:
         level: ``DEBUG`` … ``CRITICAL``; lines below it cost one comparison.
         fmt: ``AUTO`` writes JSON unless ``stream`` is a terminal.
-        component: ``api`` or ``worker``, added to every line.
-        environment: Deployment name (``prod``), added to every line.
+        component: Process name (``api``), added to every line.
+        environment: Deployment name (``production``), added to every line.
         stream: Where lines go (stdout; a log shipper reads it). Tests pass a buffer.
         cache: Bind loggers on first use (faster). Tests turn it off so they can reconfigure.
         debug: The scopes that log at DEBUG (``LOG_DEBUG``, :class:`LogScopes`). When set it
@@ -222,7 +201,7 @@ def _gate(allowed: Allowed) -> Processor:
 
 
 class _ScopeFilter(logging.Filter):
-    """The same rule for standard library records (SQLAlchemy, httpx, granian…)."""
+    """The same rule for standard library records (httpx, granian…)."""
 
     def __init__(self, allowed: Allowed) -> None:
         super().__init__()
@@ -240,7 +219,7 @@ def _bridge_standard_library(
     renderer: list[Processor],
     allowed: Allowed | None,
 ) -> None:
-    """Send ``logging`` records (granian, SQLAlchemy, httpx…) through the same processors."""
+    """Send ``logging`` records (granian, httpx…) through the same processors."""
     handler = logging.StreamHandler(stream)
     handler.setFormatter(
         structlog.stdlib.ProcessorFormatter(
@@ -293,7 +272,7 @@ def _static(fields: dict[str, str], _: WrappedLogger, __: str, event: EventDict)
 
 
 def _redact(_: WrappedLogger, __: str, event: EventDict) -> EventDict:
-    """C-E4: no secrets, no tokens, no addresses in a log line."""
+    """No secrets, no tokens, no addresses in a log line."""
     for key in SECRET_KEYS & event.keys():
         event[key] = REDACTED
     return event

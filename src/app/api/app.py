@@ -1,14 +1,7 @@
-"""ASGI application factory (workspace-manager pattern).
+"""ASGI app factory, served by ``granian --factory app.api.app:create_app``.
 
-Served by ``granian --interface asgi --factory app.api.app:create_app``.
-
-In the Docker image, supervisord runs nginx (port 80, the image cache) in front of granian
-(127.0.0.1:8080): ``nginx/nginx.conf``.
-
-Routes are mounted under ``BASE_PATH`` (the AWS load balancer forwards ``{BASE_PATH}/*``
-unstripped). Unlike workspace-manager's ``BasePath`` middleware (a root path), the prefix is part
-of every route path here, because FastAPI builds operation ids from the path and neuroagent-ts
-names its generated types after them (``api/routes.py``).
+Routes include ``BASE_PATH`` in their path: operation ids come from it, and neuroagent-ts names its
+generated types after them.
 """
 
 from collections.abc import AsyncGenerator
@@ -64,8 +57,7 @@ def create_app(settings: Settings | None = None, entitycore: EntityCore | None =
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-        # One client per process: keep-alive connections to entitycore and storage are reused.
-        # A capped pool (Backpressure): a burst queues here instead of reaching entitycore at once.
+        # One pooled client per process; the cap makes a burst queue here, not at entitycore.
         connections = settings.entitycore.max_connections
         http = httpx2.AsyncClient(
             timeout=settings.entitycore.timeout_seconds,
@@ -103,8 +95,7 @@ def create_app(settings: Settings | None = None, entitycore: EntityCore | None =
     app.state.settings = settings
     problems.install(app)
     app.add_middleware(RequestLog)
-    # Outermost, so a preflight never reaches the routes. Bearer tokens, no cookies: no
-    # credentials mode (the old service allowed credentials it never used).
+    # Outermost, so a preflight never reaches the routes. Bearer tokens only: no credentials.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.api.cors_origins,
@@ -120,7 +111,7 @@ def create_app(settings: Settings | None = None, entitycore: EntityCore | None =
 
     @app.get(f"{base}/health", tags=["Health"])
     async def health(response: Response) -> dict[str, str]:
-        """Process is up: the AWS target group's check and the container's. No I/O."""
+        """Liveness for the load balancer and the container. No I/O."""
         response.headers["Cache-Control"] = "no-cache"
         return {"status": "OK"}
 

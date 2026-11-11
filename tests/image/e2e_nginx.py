@@ -1,8 +1,7 @@
 """End-to-end check of the image: nginx cache + granian app, against a fake entitycore.
 
-``make e2e`` (builds first). Standard library only. Runs the image as ECS does (read-only root, the
-task's writable volumes, BASE_PATH) and checks the cache over HTTP: a hit makes no call to the app
-or entitycore, errors are never stored, CORS per origin, concurrent misses draw once.
+``make e2e``. Runs the image as ECS does (read-only root, BASE_PATH) and checks over HTTP: a hit
+calls nothing, errors are never stored, CORS per origin, concurrent misses draw once.
 """
 
 import hashlib
@@ -179,9 +178,7 @@ def main() -> int:
 def cors_checks(port: int, preview: str) -> None:
     """CORS, as a browser asks: the preflight with its request headers, then the image."""
 
-    # The preflight exactly as core-web-app's browser sends it (src/api/thumbnail-svc/index.ts sends
-    # Content-Type: application/json, which is not a simple header): the first version of this
-    # check sent no request headers, and missed that Content-Type was refused.
+    # With request headers, as a browser sends them: a non-simple header must be allowed too.
     def preflight(origin: str, headers: str) -> http.client.HTTPResponse:
         connection = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
         connection.request(

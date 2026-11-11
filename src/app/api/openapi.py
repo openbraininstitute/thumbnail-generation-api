@@ -1,7 +1,6 @@
-"""The committed ``openapi.json``: ``uv run python -m app.api.openapi``.
+"""Writes the committed ``openapi.json`` (``make openapi``), with the deployed base path.
 
-Built with the deployed base path, as neuroagent-ts fetches it (``…/api/thumbnail-generation/
-openapi.json``). ``tests/api/test_openapi.py`` fails when the code and the file differ (C-R5).
+``tests/api/test_openapi.py`` fails when the file and the code differ.
 """
 
 import json

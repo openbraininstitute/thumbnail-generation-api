@@ -1,8 +1,6 @@
-"""What every renderer shares: a thread-safe figure, the encoder, and the parse boundary.
+"""Shared by renderers: a thread-safe figure, the encoder, the parse boundary.
 
-Renders run on worker threads at the same time (``application/previews.py``). ``pyplot`` keeps
-process-wide state and is not thread-safe, so figures are built with the object-oriented API
-(``Figure`` + an Agg canvas): no global state, no lock needed.
+Figures use the object API (``Figure`` + Agg), not ``pyplot``, which is not thread-safe.
 """
 
 import io
@@ -20,9 +18,7 @@ from app.domain.preview import ImageFormat
 
 mpl.use("agg")  # neurom imports pyplot; on a server there is no display backend to pick
 
-# Pillow options per format, through ``savefig``. PNG: zlib level 1, the fastest lossless level
-# (a few bytes more for much less CPU). WebP: lossless, so line art stays pixel-exact; for these
-# sparse plots lossy is not smaller. Values from the old api/utils/image_format.py.
+# PNG: fastest zlib level (much less CPU, a few bytes more). WebP: lossless keeps line art exact.
 _PIL_KWARGS: dict[ImageFormat, dict[str, object]] = {
     ImageFormat.PNG: {"compress_level": 1},
     ImageFormat.WEBP: {"lossless": True},
@@ -46,7 +42,7 @@ def encode(fig: Figure, dpi: int | None, image_format: ImageFormat) -> bytes:
 
 
 def text_of(content: bytes) -> str:
-    """The file as text, as the old service read it (UTF-8, a bad byte replaced, not fatal)."""
+    """The file as UTF-8 text; a bad byte is replaced, not fatal."""
     return content.decode("utf-8", errors="replace")
 
 

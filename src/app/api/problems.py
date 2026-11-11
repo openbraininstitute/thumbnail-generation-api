@@ -1,8 +1,4 @@
-"""REST errors: RFC 9457 problem details carrying the stable ``ErrorCode`` (spec 06 C-R4).
-
-One table gives the HTTP status of every code, so a status is decided in one place. The old
-service read a class attribute and answered 400 for every ``ApiError`` (``api/main.py:112``).
-"""
+"""Errors as RFC 9457 problems with a stable ``ErrorCode``; ``STATUS`` maps each code to HTTP."""
 
 from http import HTTPStatus
 
@@ -20,7 +16,7 @@ log = get_logger("api.problem")
 
 PROBLEM_MEDIA_TYPE = "application/problem+json"
 
-STATUS: dict[ErrorCode, int] = {  # every code has a row: tests/api/test_problems.py checks it
+STATUS: dict[ErrorCode, int] = {  # tests/api/test_openapi.py: every code has a row
     ErrorCode.Unauthenticated: 401,
     ErrorCode.Forbidden: 403,
     ErrorCode.BadUserInput: 422,
@@ -36,7 +32,7 @@ STATUS: dict[ErrorCode, int] = {  # every code has a row: tests/api/test_problem
     ErrorCode.Internal: 500,
 }
 
-# Errors Starlette raises itself (no route, a bearer scheme FastAPI refused, a wrong method).
+# Errors Starlette raises itself (no route, refused bearer scheme, wrong method).
 HTTP_CODES: dict[int, ErrorCode] = {
     401: ErrorCode.Unauthenticated,
     403: ErrorCode.Forbidden,
@@ -55,8 +51,7 @@ class Problem(Value):
     errors: list[JsonValue] | None = None
 
 
-# The error answers, for the OpenAPI document: clients generate their error type from it
-# (neuroagent-ts: zod). One entry per status that ``STATUS`` can give.
+# Error answers in the OpenAPI document, one per status: clients generate their error type from it.
 RESPONSES: dict[int | str, dict[str, object]] = {
     status: {"model": Problem, "content": {PROBLEM_MEDIA_TYPE: {}}, "description": title}
     for status, title in sorted({s: HTTPStatus(s).phrase for s in STATUS.values()}.items())
@@ -122,7 +117,7 @@ async def _crash(_: Request, error: Exception) -> JSONResponse:
 
 
 def install(app: FastAPI) -> None:
-    """Answer every error of ``app`` as a problem (one edge, spec 06 C-E5)."""
+    """Answer every error of ``app`` as a problem."""
     app.add_exception_handler(DomainError, _domain)
     app.add_exception_handler(RequestValidationError, _invalid)
     app.add_exception_handler(HTTPException, _http)

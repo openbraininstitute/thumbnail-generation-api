@@ -6,8 +6,7 @@ from app.api import openapi
 from app.api.problems import STATUS
 from app.domain.errors import ErrorCode
 
-# The operation ids of the old service for the routes the platform calls (captured from it on
-# 2026-11-10, BASE_PATH=/api/thumbnail-generation). neuroagent-ts names its zod schemas after them.
+# neuroagent-ts names its zod schemas after these operation ids: they must not change.
 KEPT = {
     "get_morphology_preview_api_thumbnail_generation_core_cell_morphology_preview_get",
     "get_ephys_preview_api_thumbnail_generation_core_electrical_cell_recording_preview_get",

@@ -32,84 +32,83 @@ format:  ## ruff format and fix
 typecheck:  ## ty check
 	uv run ty check
 
-test:  ## Tests, doctests and coverage (golden images, openapi.json, .env.example checks)
+test:  ## Tests, doctests and coverage
 	uv run pytest --cov
 
 check: lint typecheck test  ## Everything CI checks
 
-openapi:  ## Regenerate openapi.json (neuroagent-ts generates its types from it)
+openapi:  ## Regenerate openapi.json
 	uv run python -m app.api.openapi
 
 audit:  ## Known vulnerabilities in the locked dependencies
 	uv run pip-audit
 
-dev:  ## Run the api on this machine with reload, no nginx (settings from .env when it exists)
+dev:  ## Run the app with reload, no nginx (.env)
 	uv run $(ENV_FLAG) granian --interface asgi --factory --reload --port $(API_PORT) \
 		app.api.app:create_app
 
 build:  ## Build the image
 	docker build -t $(IMAGE) .
 
-smoke: build  ## Draw every golden case inside the image (read-only root) and compare pixels
+smoke: build  ## Golden images drawn inside the image
 	docker run --rm --read-only --tmpfs /tmp -v "$(CURDIR)/tests/fixtures:/fixtures:ro" \
 		-v "$(CURDIR)/tests/image:/checks:ro" $(IMAGE) python /checks/smoke.py /fixtures
 
-e2e: build  ## The image against a fake entitycore: nginx cache, CORS, cache lock
+e2e: build  ## The image against a fake entitycore (cache, CORS)
 	python3 tests/image/e2e_nginx.py $(IMAGE)
 
-old-image:  ## Build the old service's image from git (OLD_COMMIT), for parity and bench
+old-image:  ## Build the old service's image (OLD_COMMIT)
 	git archive $(OLD_COMMIT) | docker build -q -t $(OLD_IMAGE) -
 
-parity: build  ## [local scripts/, not in git] Old vs new image: every thumbnail route, same status, type and pixels
+parity: build  ## [local scripts/] Old vs new: same answers and pixels
 	@docker image inspect $(OLD_IMAGE) >/dev/null 2>&1 || $(MAKE) --no-print-directory old-image
 	uv run python scripts/parity.py $(OLD_IMAGE) $(IMAGE)
 
-bench: build  ## [local scripts/, not in git] Old vs new image: miss and hit latency, bursts, memory
+bench: build  ## [local scripts/] Old vs new: latency and memory
 	@docker image inspect $(OLD_IMAGE) >/dev/null 2>&1 || $(MAKE) --no-print-directory old-image
 	cd scripts && uv run python bench.py $(OLD_IMAGE) $(IMAGE)
 
-stress-test-old: old-image  ## [local scripts/, not in git] Stress test the OLD image against staging (resources of the ECS task)
+stress-test-old: old-image  ## [local scripts/] Stress test the old image against staging
 	uv run python scripts/stress.py run old $(OLD_IMAGE)
 
-stress-test-new: build  ## [local scripts/, not in git] Stress test the NEW image against staging (resources of the ECS task)
+stress-test-new: build  ## [local scripts/] Stress test the new image against staging
 	uv run python scripts/stress.py run new $(IMAGE)
 
-stress-report:  ## [local scripts/, not in git] Old and new stress results side by side (reports/stress-*.json)
+stress-report:  ## [local scripts/] Old and new stress results side by side
 	uv run python scripts/stress.py report
 
-up:  ## Run the image (nginx + app) and the cache dashboard with compose
+up:  ## Run the image and the cache dashboard
 	docker compose up -d --build --wait
 	@echo "api             http://localhost:$(API_PORT)/docs"
 	@echo "cache dashboard http://localhost:$(CACHE_UI_PORT)"
 
-watch:  ## Run the stack and rebuild the api on every change in src/, nginx/, .env... (Ctrl-C stops)
+watch:  ## Run the stack, rebuild on every change
 	docker compose up --build --watch
 
-open-api:  ## Open the API docs (through nginx) in the browser; run `make up` first
+open-api:  ## Open the API docs (after make up)
 	$(OPEN) http://localhost:$(API_PORT)/docs
 
-open-cache:  ## Open the cache dashboard (GoAccess) in the browser; run `make up` first
+open-cache:  ## Open the cache dashboard (after make up)
 	$(OPEN) http://localhost:$(CACHE_UI_PORT)
 
 down:  ## Stop it all
 	docker compose down --remove-orphans
 
-reset:  ## Start the local stack from zero: containers, nginx's cache, the dashboard's data; then `up`
-	@# The cache is a tmpfs, so it goes with the container; --volumes removes the access log and
-	@# the report. Images are kept (their layer cache makes the rebuild in `up` fast).
+reset:  ## Remove the local stack and its data, then up
+	@# Images are kept, so the rebuild is fast.
 	docker compose down --volumes --remove-orphans
 	@$(MAKE) --no-print-directory up
 
-logs:  ## Follow the api container's logs (nginx and app)
+logs:  ## Follow nginx and app logs
 	docker compose logs -f api
 
-cache-ls:  ## What nginx's cache holds now: one key (image parameters) per line, then the total
+cache-ls:  ## List nginx's cached images
 	@docker compose exec api sh -c 'grep -rah "^KEY: " /var/cache/nginx | cut -c6- | sort; \
 		echo "--"; echo "$$(grep -rl "^KEY: " /var/cache/nginx | wc -l) entries, $$(du -sh /var/cache/nginx | cut -f1)"'
 
-dashboard-clear:  ## Empty the cache dashboard's data (nginx's access log) and restart it; the cache is kept
+dashboard-clear:  ## Empty the dashboard's data (keeps the cache)
 	docker compose exec api sh -c ': > /var/log/nginx-local/access.log'
 	docker compose restart goaccess
 
-cache-clear:  ## Empty nginx's cache in the local stack (restarts the api container)
+cache-clear:  ## Empty nginx's cache (restarts the api)
 	docker compose restart api

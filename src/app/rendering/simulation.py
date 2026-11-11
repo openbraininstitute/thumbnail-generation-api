@@ -1,7 +1,6 @@
-"""Single-neuron simulation result (JSON) → the stimulus or the first recording, with plotly.
+"""Single-neuron simulation result (JSON) → the stimulus or the first recording.
 
-plotly + kaleido 0.2.1 draw these (the old service's choice; kaleido runs a bundled headless
-Chromium and serialises calls to it). Kept so the images stay the same.
+Drawn with plotly + kaleido (a bundled headless Chromium), so the images stay the same.
 """
 
 import io
@@ -19,7 +18,7 @@ MARGIN = 4
 
 
 class PlotData(BaseModel):
-    """One plotly trace (a plain model, not ``Value``: extra keys are ignored as before)."""
+    """One plotly trace (not ``Value``: extra keys are ignored)."""
 
     x: list[float]
     y: list[float]

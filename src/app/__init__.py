@@ -1,6 +1,6 @@
 """Thumbnails of entitycore assets for the Open Brain Institute platform.
 
-Layers (one direction only, as in workspace-manager spec 06 C-L1..C-L4)::
+Layers, each importing only the ones below it::
 
     api (routes, problems)
       -> application (previews, ports)

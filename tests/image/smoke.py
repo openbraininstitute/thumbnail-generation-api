@@ -1,8 +1,6 @@
 """Draw every golden case inside the Docker image and compare pixels: ``make smoke``.
 
-The real check of the deployed artifact: slim base, read-only root, kaleido's Chromium. The
-simulation golden files come from the old production image (Linux); Chromium draws text with the
-platform's fonts, so those two cases are compared here and not in pytest on a laptop.
+Simulation plots are compared only here: Chromium draws text with the platform's fonts.
 """
 
 import io

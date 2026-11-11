@@ -1,15 +1,12 @@
 name: release
 
-# A push to main releases it: every check (on_merge_request.yml) must pass, then the image is built
-# for amd64 and arm64 (ECS runs ARM64), pushed to the public ECR as YYYY.MM.DD.N, and only then is
-# the commit tagged with that name, so a failed build leaves no tag. To deploy, set the tag in the
-# aws-terraform-deployment repository (staging.tfvars, production.tfvars).
+# A push to main: run the checks, push the image to ECR as YYYY.MM.DD.N, then tag the commit.
+# Deploy: set the tag in aws-terraform-deployment (staging.tfvars, production.tfvars).
 on:
   push:
     branches: [main]
 
-# One release at a time, in order: two at once could pick the same tag. Never cancelled: a release
-# stopped halfway would have pushed an image with no tag.
+# One at a time (two could pick the same tag), never cancelled halfway.
 concurrency:
   group: release
   cancel-in-progress: false
@@ -27,13 +24,13 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write  # push the git tag
-      id-token: write  # OIDC: assume the ECR push role, no stored AWS key
+      id-token: write  # OIDC: AWS role, no stored key
       actions: write   # build cache (type=gha)
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # every tag, to pick the next number of the day
+          fetch-depth: 0  # all tags, for the next number
 
       - name: Determine new tag
         run: |

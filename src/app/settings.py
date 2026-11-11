@@ -1,15 +1,7 @@
-"""Typed settings, read once from the environment, one group per topic (workspace-manager pattern).
+"""Typed settings from the environment, one group per topic.
 
-Each group is its own settings class with its own prefix, and :class:`Settings` holds them all:
-``settings.entitycore.uri`` is ``ENTITY_CORE_URI``. A new topic adds one group class and one
-field on :class:`Settings`.
-
-The names the deployment already sets (infra ``thumbnail-generation-api/container.tf``) are kept
-as they are, without a service prefix: ``BASE_PATH``, ``WHITELISTED_CORS_URLS``,
-``CORS_ORIGIN_REGEX``, ``ENVIRONMENT``, ``SENTRY_DSN``, ``ENTITY_CORE_URI``. Renaming them would
-need an infra change for no gain. The service reads no dotenv file: ``make dev`` passes
-``.env`` (``uv run --env-file``), so tests see only what they are given. Every setting, with its
-default and an explanation: ``.env.example`` (``tests/test_env_example.py`` keeps them in step).
+``settings.entitycore.uri`` is ``ENTITY_CORE_URI``; deployed names keep no prefix (``BASE_PATH``,
+``SENTRY_DSN``...). No dotenv file is read. Every setting is explained in ``.env.example``.
 """
 
 import re
@@ -99,15 +91,14 @@ def _group(prefix: str) -> SettingsConfigDict:
 
 
 class ApiSettings(BaseSettings):
-    """How the HTTP API is served and who may call it from a browser (no prefix: deployed names)."""
+    """How the API is served and which browser origins may call it."""
 
     model_config = _group("")
 
     base_path: str = Field(
         default="",
         pattern=r"^(/[A-Za-z0-9._~-]+)*$",
-        description="Path prefix of every route: the AWS load balancer forwards "
-        "{base_path}/* unstripped and checks {base_path}/health. Empty = served at /.",
+        description="Path prefix of every route (the load balancer does not strip it).",
     )
     cors_origins: list[str] = Field(
         default=["http://localhost:3000"],
@@ -116,19 +107,13 @@ class ApiSettings(BaseSettings):
     )
     cors_origin_regex: Pattern[str] | None = Field(
         default=LOCAL_ORIGINS,
-        description="Origins allowed by pattern, beside cors_origins (the whole origin must "
-        "match). Default: http://localhost or 127.0.0.1 on any port, so a web app run locally "
-        "on any port can call any deployment (bearer tokens, no cookies: such a page still "
-        "needs the user's token). Empty = only the list.",
+        description="Origins allowed by a pattern matching the whole origin; default: localhost.",
     )
 
     @field_validator("cors_origins")
     @classmethod
     def _origins_are_origins(cls, value: list[str]) -> list[str]:
-        """Each entry is ``*`` or ``scheme://host[:port]``: they are written into nginx's config.
-
-        A quote or a semicolon there could change nginx's configuration (api/nginx_cors.py).
-        """
+        """Each entry is ``*`` or ``scheme://host[:port]``: it is written into nginx's config."""
         for origin in value:
             ensure(
                 ORIGIN.fullmatch(origin),
@@ -160,7 +145,7 @@ class EntitycoreSettings(BaseSettings):
 
     uri: str = Field(
         default="https://staging.openbraininstitute.org/api/entitycore",
-        description="Root of the entitycore API (ENTITY_CORE_URI).",
+        description="Root of the entitycore API.",
     )
     timeout_seconds: float = Field(
         default=30.0, gt=0, description="Per request to entitycore and to the storage download."
@@ -168,41 +153,34 @@ class EntitycoreSettings(BaseSettings):
     max_connections: int = Field(
         default=32,
         ge=1,
-        description="Connections one process opens to entitycore and the storage at once; more "
-        "requests queue in the process. Measured on staging: 200 calls at once made entitycore "
-        "answer 502/503 for minutes; without a cap a burst passes straight through.",
+        description="Connections per process to entitycore and storage (200 overloaded staging).",
     )
     max_asset_bytes: int = Field(
         default=1024 * MIB,
         gt=0,
-        description="Largest asset downloaded to draw. The container has 2 GB and an NWB file "
-        "is held in memory while parsed; a larger asset gets ASSET_TOO_LARGE, not an OOM kill. "
-        "Not measured: the size of real assets; raise it if a valid asset is refused.",
+        description="Largest asset drawn; a larger one gets ASSET_TOO_LARGE, not an OOM kill.",
     )
 
 
 class RenderSettings(BaseSettings):
-    """How much drawing one process does at once (the image cache is nginx's, nginx/nginx.conf)."""
+    """How much drawing one process does at once."""
 
     model_config = _group("RENDER_")
 
     concurrency: int = Field(
         default=4,
         ge=1,
-        description="Renders (CPU) one process runs at the same time; the others wait.",
+        description="Renders one process runs at once; the others wait.",
     )
     downloads: int = Field(
         default=16,
         ge=1,
-        description="Files one process downloads at the same time; the others wait. Also bounds "
-        "the connections to entitycore and the storage.",
+        description="Files one process downloads at once; the others wait.",
     )
     memory_bytes: int = Field(
         default=512 * MIB,
         ge=MIB,
-        description="Memory one process may hold for the files it draws (3x each file's size). "
-        "The image runs 2 processes in a 2 GiB container that idles at about 450 MiB: 2 x 512 MiB "
-        "leaves room. Measured: without it, a burst of ephys files filled the 2 GiB.",
+        description="Memory per process for files being drawn (3x each file's size).",
     )
 
 

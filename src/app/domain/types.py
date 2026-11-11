@@ -1,14 +1,10 @@
-"""The base of every value object (from workspace-manager ``domain/types.py``)."""
+"""The base of every value object."""
 
 from pydantic import BaseModel, ConfigDict
 
 
 class Value(BaseModel):
-    """Base of every value object in the service: frozen, compared by value (Value Object).
-
-    One class style everywhere instead of ``@dataclass(frozen=True)``. Keyword arguments
-    only; construction validates the fields, so a wrong type fails where the value is made.
-    A field holding a non-Pydantic object (a numpy array) needs ``arbitrary_types_allowed``.
+    """A frozen value object, compared by value; fields are validated when it is made.
 
     Examples:
         >>> class Point(Value):
@@ -17,5 +13,5 @@ class Value(BaseModel):
         True
     """
 
-    # forbid: a misspelled keyword (``Value(dpii=5)``) fails here instead of being dropped.
+    # forbid: a misspelled field fails instead of being dropped.
     model_config = ConfigDict(frozen=True, extra="forbid")

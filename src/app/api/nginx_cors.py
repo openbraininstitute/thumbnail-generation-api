@@ -1,12 +1,6 @@
-"""nginx's CORS allow-list, written from the app's settings at container start.
+"""nginx's CORS allow-list, written from the app's settings at start (entrypoint.sh).
 
-``python -m app.api.nginx_cors > /tmp/nginx_cors.conf`` (supervisord.conf).
-
-Why nginx answers CORS for previews: a cached image is shared by every origin, so it must hold no
-``Access-Control-Allow-Origin`` of its own (the old cache kept the first caller's origin and sent it
-to everyone). nginx adds the header per request from this map. One allow-list for the app and
-nginx: ``WHITELISTED_CORS_URLS`` and ``CORS_ORIGIN_REGEX`` (settings.py), never a copy in
-nginx.conf.
+A cached image is shared by every origin, so nginx adds ``Access-Control-Allow-Origin`` per request.
 """
 
 from app.settings import ApiSettings, get_settings
@@ -34,4 +28,4 @@ def map_conf(api: ApiSettings) -> str:
 
 
 if __name__ == "__main__":
-    print(map_conf(get_settings().api))  # noqa: T201 - the file supervisord writes
+    print(map_conf(get_settings().api))  # noqa: T201 - entrypoint.sh writes it to a file

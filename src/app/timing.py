@@ -1,20 +1,7 @@
-"""Where a request's time went, sent back as a W3C ``Server-Timing`` header.
+"""Where a request's time went, sent back as a W3C ``Server-Timing`` header (shown in DevTools).
 
-``Server-Timing`` (https://www.w3.org/TR/server-timing/) is the standard place for it: browsers
-show each phase in DevTools (Network > a request > Timing), and scripts read it from
-``performance.getEntries()``. Phases are measured with ``time.perf_counter`` (monotonic, sub-µs:
-a wall clock can jump while a request runs).
-
-The request log middleware opens a collector per request (:func:`collect`); code anywhere below it
-records a phase with ``with phase("render"):``, with nothing passed down (a ``ContextVar``, as the
-log context). Outside a request, recording does nothing.
-
-Example header (a cache miss):
-``queue;dur=0.1, meta;dur=312.4, download;dur=180.2, render_wait;dur=0.2, render;dur=46.9,
-app;dur=541.3``
-
-``queue`` and ``render_wait`` are waits (for memory or a download slot, then for a render slot):
-high values mean a busy process, not slow work.
+The request log opens a collector per request (:func:`collect`); code below it records a phase with
+``with phase("render"):``. ``queue`` and ``render_wait`` are waits: high values mean a busy process.
 """
 
 import time

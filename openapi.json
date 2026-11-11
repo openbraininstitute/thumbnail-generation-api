@@ -1003,7 +1003,7 @@
           "Health"
         ],
         "summary": "Health",
-        "description": "Process is up: the AWS target group's check and the container's. No I/O.",
+        "description": "Liveness for the load balancer and the container. No I/O.",
         "operationId": "health_api_thumbnail_generation_health_get",
         "responses": {
           "200": {

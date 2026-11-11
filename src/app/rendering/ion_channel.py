@@ -1,11 +1,7 @@
 """Ion channel recording (NWB) → every activation trace on one plot, one colour each, no axes.
 
-Artifacts are smoothed (a point whose derivative is over twice the mean is replaced by the mean
-of its neighbours, three passes) so they stay visible without crushing the scale of the plot.
-The algorithm is the old ``api/tools/plot_ion_channel.py`` one, with the same results bit for bit;
-only the per-sample Python loops are replaced by numpy (measured: the artifact loop was 86-90% of
-the render for 20 000 samples, 910 ms for 30 traces). tests/rendering/test_ion_channel.py keeps the
-old loops as the reference and compares on random recordings.
+Artifacts are smoothed in three passes so they do not crush the scale. Vectorised with numpy,
+same pixels as the old loops (tests/rendering/test_ion_channel.py compares them).
 """
 
 import io
@@ -43,8 +39,6 @@ def read_activation(content: bytes) -> NDArray[Any]:
 def compute_derivatives(array: NDArray[np.float32]) -> NDArray[np.float32]:
     """Per point, the larger absolute difference to its two neighbours (0 past each end).
 
-    The same float32 subtractions as the old per-sample loop, on whole arrays.
-
     Examples:
         >>> compute_derivatives(np.array([0, 1, 3, 2], dtype=np.float32)).tolist()
         [1.0, 2.0, 2.0, 1.0]
@@ -55,13 +49,10 @@ def compute_derivatives(array: NDArray[np.float32]) -> NDArray[np.float32]:
 
 
 def exact_mean(values: NDArray[np.float32]) -> np.float32:
-    """``statistics.mean(list(values))`` for float32 values, without a Fraction per value.
+    """``statistics.mean(list(values))`` for float32, exact, without a Fraction per value.
 
-    statistics.mean adds the values exactly (as fractions), divides by their count and converts
-    the result to float32. Here a float32 is written k * 2**e with an integer k below 2**24; the k
-    of each exponent are added in float64 (exact: below 2**53 for fewer than 2**29 values), then
-    the few sums are joined as one exact integer, and the same final division and conversion
-    follow.
+    Each value is k * 2**e (integer k < 2**24); the k are summed per exponent in float64 (exact
+    under 2**29 values), then joined as one exact integer.
 
     Examples:
         >>> import statistics
@@ -70,7 +61,7 @@ def exact_mean(values: NDArray[np.float32]) -> np.float32:
         True
     """
     if not np.isfinite(values).all() or values.size >= 2**29:
-        # The rare case keeps the original code path (float32 items: statistics returns float32).
+        # Rare case: the plain statistics path.
         return np.float32(statistics.mean(list(values)))  # ty: ignore[invalid-argument-type]
     mantissa, exponent = np.frexp(values)
     k = np.ldexp(mantissa, 24)  # whole numbers, |k| < 2**24 (float32 has a 24-bit significand)
@@ -102,7 +93,7 @@ def remove_artifacts(data: NDArray[Any], index: int) -> NDArray[Any]:
             suspicious = np.flatnonzero(derivatives > threshold).tolist()
             if not suspicious:
                 return array
-            # Stays a loop: each point uses its neighbours as already replaced, in order.
+            # A loop: each point uses its already replaced neighbours.
             remove_suspicious_indexes(array, suspicious)
     except Exception as error:  # noqa: BLE001 - best effort: the trace is drawn unsmoothed
         return match_error(error, {Exception: lambda e: _unsmoothed(array, index, e)})
@@ -126,7 +117,7 @@ def render(content: bytes, spec: RenderSpec) -> bytes:
     x = np.arange(npoints)
     fig, ax = new_figure(figsize=FIGSIZE)
     for trace in range(nb_traces):
-        # max(…, 1): one trace divided by zero in the old service (a 500); it now gets colour 0.
+        # max(…, 1): a single trace gets colour 0 instead of dividing by zero.
         color = colormap(trace / max(nb_traces - 1, 1))
         ax.plot(x, remove_artifacts(data, trace), color=color, linewidth=0.5)
     ax.set_xticks([])

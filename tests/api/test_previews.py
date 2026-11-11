@@ -106,7 +106,7 @@ async def test_etag_changes_with_the_parameters(fake: FakeEntityCore) -> None:
 async def test_entitycore_refusals_keep_their_status(
     fake: FakeEntityCore, refusal: ErrorCode, status: int
 ) -> None:
-    """The old service answered 400 for every one of them (api/main.py:112)."""
+    """Each refusal keeps its own status, not a blanket 400."""
     entity, asset = fake.add(EntityRoute.CellMorphology, SWC)
     fake.refusal = refusal
     async with client(fake) as http:
@@ -126,7 +126,7 @@ async def test_unreadable_asset_is_422(fake: FakeEntityCore) -> None:
 
 
 async def test_simulation_needs_a_token(fake: FakeEntityCore) -> None:
-    """The old simulation route sent an anonymous request on to entitycore."""
+    """A request without a token is refused before entitycore is called."""
     entity, asset = fake.add(EntityRoute.SingleNeuronSimulation, b"{}")
     async with client(fake) as http:
         response = await http.get(

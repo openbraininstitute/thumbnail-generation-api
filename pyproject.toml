@@ -5,24 +5,21 @@ description = "Thumbnails of entitycore assets (morphologies, recordings, simula
 authors = [{ name = "Open Brain Institute" }]
 readme = "README.md"
 license = { text = "Apache-2.0" }
-# 3.14, not 3.15 like workspace-manager: h5py has no 3.15 wheel yet (measured 2026-11-10, uv
-# falls back to a source build that needs a system HDF5). Move up when h5py ships one.
+# Not 3.15 yet: h5py has no 3.15 wheel.
 requires-python = ">=3.14"
 dependencies = [
     "fastapi>=0.162.2",
     "granian>=2.8.7",
     "h5py>=3.16.0",
     "httpx2>=2.16.0",
-    "kaleido==0.2.1",       # plotly's image export; pinned with plotly, the golden images use it
-    # 3.10 line on purpose: 3.11 lays out the ephys tick labels a few pixels differently, so the
-    # ephys thumbnail would change (measured 2026-11-10 against the old production image; 3.10.7+
-    # match it exactly and have Python 3.14 wheels). Move to 3.11 only with a new golden set.
+    "kaleido==0.2.1",       # plotly's image export, pinned with plotly (golden images)
+    # Not 3.11: it moves the ephys tick labels; needs a new golden set.
     "matplotlib>=3.10.9,<3.11",
     "neurom>=4.0.6",
     "numpy>=2.5.4",
     "palettable>=3.3.3",
     "pillow>=13.0.0",
-    "plotly==5.23.0",       # plotly 6 needs kaleido 1 (another Chrome): a new golden set first
+    "plotly==5.23.0",       # plotly 6 needs kaleido 1 and a new golden set
     "pydantic>=2.14.3",
     "pydantic-settings>=2.16.2",
     "sentry-sdk>=2.74.0",
@@ -104,8 +101,7 @@ convention = "google"
     "S607",
     "S108",    # /tmp is a tmpfs mount point of the container, not a temp file
 ]
-# The plot code is the code that made the golden images, kept as it was: renaming its locals or
-# reshaping its loops is a risk to the pixels for no gain (tests/rendering/test_golden.py).
+# Plot code kept as it made the golden images: changing it risks the pixels.
 "src/app/rendering/*.py" = [
     "PLR2004", # the plot constants (font size 16, 3 passes) are the look
     "N806",    # matplotlib and numpy names as the original code wrote them
@@ -124,7 +120,7 @@ error-on-warning = true
 [tool.pytest]
 minversion = "9.0"
 testpaths = ["tests", "src"]
-# tests/image: scripts run against a built image (make smoke, make e2e), not pytest modules.
+# tests/image: scripts run against a built image (make smoke, make e2e).
 addopts = ["--strict-markers", "--doctest-modules", "--import-mode=importlib", "--ignore=tests/image"]
 pythonpath = ["."]
 asyncio_mode = "auto"
@@ -135,8 +131,7 @@ markers = [
 ]
 filterwarnings = [
     "error", # a deprecation is fixed when it appears, not later
-    # kaleido 0.2.1 (pinned with plotly 5.23) calls Thread.setDaemon, deprecated in Python 3.14.
-    # ponytail: harmless until Python removes it; then plotly 6 + kaleido 1 and a new golden set.
+    # kaleido 0.2.1 calls Thread.setDaemon (deprecated in 3.14). ponytail: harmless until removed.
     "ignore:setDaemon\\(\\) is deprecated:DeprecationWarning",
 ]
 

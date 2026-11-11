@@ -1,9 +1,7 @@
-"""What a preview is made of: the caller, the entitycore asset, and how to draw it.
+"""A preview: the caller, the asset, and how to draw it.
 
-The nginx cache key and the HTTP ``ETag`` come from one string (:meth:`RenderSpec.key`), made
-from the asset's content digest and every parameter that changes the image, never from the caller:
-one render is shared by every caller entitycore lets read the asset (Content-Addressed Cache), and
-a cached image is never stale, because a changed file is a new key.
+The ETag (:meth:`RenderSpec.key`) comes from the file's digest and the drawing parameters, never
+the caller: a changed file is a new key, so a cached image is never stale.
 """
 
 import hashlib
@@ -51,10 +49,7 @@ class EntityRoute(StrEnum):
 
 
 class Caller(Value):
-    """Who asks, as entitycore needs it: the bearer token and the project context headers.
-
-    The token is passed on to entitycore, which decides access; this service never reads it.
-    """
+    """The caller's token and project headers, passed on to entitycore (it decides access)."""
 
     token: str = Field(repr=False)
     virtual_lab_id: UUID | None = None
@@ -82,8 +77,7 @@ class RenderSpec(Value):
     def key(self, route: EntityRoute, asset: Asset) -> str:
         """The content key of this drawing of ``asset``: 32 hex characters.
 
-        The asset digest makes it content-addressed: a new file under the same id is a new
-        key. Without a digest the asset id stands in (entitycore assets do not change in place).
+        From the file's sha256, or its id when there is none (assets do not change in place).
 
         Examples:
             >>> a = Asset(id=UUID(int=1), content_type="x", size=1, sha256_digest="ab")

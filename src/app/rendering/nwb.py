@@ -1,7 +1,6 @@
-"""Which cell, protocol, repetition, sweep and response of an NWB file a trace preview shows.
+"""Which cell, protocol, repetition, sweep and response of an NWB file a preview shows.
 
-The selection rules of the old ``api/utils/trace_img.py``, unchanged; a missing element is an
-``ASSET_UNREADABLE`` error instead of the old 404s (the file is there; it is not what we read).
+A missing element is ``ASSET_UNREADABLE``.
 """
 
 import re
@@ -15,10 +14,8 @@ from app.domain.guards import ensure, match_error
 from app.rendering.common import unreadable
 
 PREFERRED_PROTOCOLS = ("IDRest", "APWaveform", "IDThres")
-# Largest dataset read into memory. HDF5 compresses: a small file can hold a dataset many times its
-# size, so the download limit alone does not bound memory (a decompression bomb would kill the
-# worker). 256 MiB is 32 million float64 samples, far above a recording's sweep (6 MB in the
-# fixture) and below the container's 2 GB shared by up to 8 concurrent renders.
+# Largest dataset decoded: HDF5 compresses, so a small file can decode to many GB.
+# 256 MiB = 32M float64 samples, far above a sweep (6 MB in the fixture).
 MAX_DECODED_BYTES = 256 * 1024 * 1024
 RESPONSE_PREFIXES = ("ic_", "vcs_", "ccs_")
 

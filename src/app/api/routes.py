@@ -1,19 +1,8 @@
-"""The preview routes: ``/core/{entity}/preview``, the only routes the platform calls.
+"""The preview routes, ``/core/{entity}/preview``, called by core-web-app and neuroagent-ts.
 
-Callers (checked 2026-11-10): core-web-app ``src/api/thumbnail-svc/index.ts`` and neuroagent-ts
-``backend/src/tools/thumbnail_generation/*``. neuroagent-ts also generates zod types from this
-OpenAPI document, named after the operation ids (``zGetMorphologyPreviewApiThumbnailGeneration…``),
-so the function names, paths and parameters below are the old ones on purpose:
-``tests/api/test_openapi.py`` fails if one changes.
-
-Server cache: nginx in front (nginx/nginx.conf) keeps each image by URL. A request reaches these
-routes only on a cache miss. Access is not checked by this service yet (owner decision,
-2026-11-10, planned next): on a miss entitycore refuses a caller who may not read the asset; a
-cached image is sent to any request that carries a bearer token.
-
-Browser cache: ``Cache-Control: private, max-age=3600`` (one hour, as the old nginx ``expires``)
-and a strong ETag, so after an hour the browser revalidates and gets a body-less 304 when the image
-is unchanged. ``private``: no shared proxy or CDN stores it.
+Do not rename functions, paths or parameters: neuroagent-ts names its generated types after the
+operation ids (``tests/api/test_openapi.py`` checks them). nginx caches each image, so these run
+only on a cache miss; the browser keeps it an hour (``private``), then revalidates with the ETag.
 """
 
 from typing import Annotated, Literal
@@ -72,7 +61,7 @@ def caller_of(
 ) -> Caller:
     """The caller, from ``Authorization: Bearer …`` and the project headers.
 
-    Every route needs a token (the old simulation route did not). Its validity is entitycore's
+    Every route needs a token. Its validity is entitycore's
     to decide, on the first call made with it.
 
     Raises:

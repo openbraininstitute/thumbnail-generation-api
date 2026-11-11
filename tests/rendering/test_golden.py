@@ -1,11 +1,7 @@
 """Same output: every renderer draws the pixels the old service drew.
 
-The golden images were made by the old code before it was removed: morphology and ion channel on
-macOS (the same pixels as on Linux), ephys and simulation in the old production image (Linux):
-ephys because matplotlib 3.11 changed its text layout (matplotlib is pinned to 3.10, see
-pyproject.toml), simulation because Chromium draws text per platform (compared in the Docker image
-by tests/image/smoke.py). `make parity` compares the old and new images on every route. Pixels are
-compared, not bytes: an encoder version may pack the same pixels differently.
+Pixels are compared, not bytes (an encoder may pack the same pixels differently). matplotlib is
+pinned to 3.10: 3.11 moves the ephys text. Simulation pixels are checked in tests/image/smoke.py.
 """
 
 import io

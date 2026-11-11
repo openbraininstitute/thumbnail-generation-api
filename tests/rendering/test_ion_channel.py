@@ -1,6 +1,6 @@
 """The vectorised artifact smoothing gives the old loops' results bit for bit.
 
-The reference below is the old code (api/tools/plot_ion_channel.py at 5fd0a51), unchanged.
+The reference below is the old code, unchanged.
 """
 
 import statistics

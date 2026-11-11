@@ -1,7 +1,4 @@
-"""The external system this service needs, as a port (Ports and Adapters, spec 06 C-L4).
-
-``infrastructure/entitycore.py`` implements it over HTTP; tests pass an in-memory fake.
-"""
+"""The entitycore port (Ports and Adapters); ``infrastructure/entitycore.py`` implements it."""
 
 from typing import Protocol
 from uuid import UUID
@@ -10,11 +7,10 @@ from app.domain.preview import Asset, Caller, EntityRoute
 
 
 class EntityCore(Protocol):
-    """Reads assets as the caller: entitycore decides what the caller may read.
+    """Reads assets as the caller; entitycore decides access.
 
-    Every method raises ``DomainError`` with ``UNAUTHENTICATED``, ``FORBIDDEN``,
-    ``ASSET_NOT_FOUND`` (entitycore's answer for "missing or not readable by you"),
-    ``ASSET_NOT_READY`` or ``ENTITYCORE_UNAVAILABLE``.
+    Every method may raise ``DomainError``: ``UNAUTHENTICATED``, ``FORBIDDEN``,
+    ``ASSET_NOT_FOUND``, ``ASSET_NOT_READY`` or ``ENTITYCORE_UNAVAILABLE``.
     """
 
     async def asset(
@@ -30,8 +26,5 @@ class EntityCore(Protocol):
         ...
 
     async def model_trace(self, caller: Caller, entity_id: UUID) -> tuple[UUID, Asset]:
-        """The validation result named ``thumbnail`` of ``entity_id`` and its PNG asset.
-
-        Raises ``VALIDATION_RESULT_NOT_FOUND`` or ``ASSET_NOT_FOUND`` when either is missing.
-        """
+        """The ``thumbnail`` validation result of ``entity_id`` and its PNG asset."""
         ...
