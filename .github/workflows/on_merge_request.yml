@@ -1,9 +1,9 @@
 name: check
 
+# Every pull request; on main, release.yml runs it before it publishes (workflow_call).
 on:
-  push:
-    branches: [main]
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
