@@ -51,6 +51,9 @@ Re-architecture. Same URLs, parameters, operation ids and images.
 
 ### Added
 
+- OpenAPI documents each preview route's answers: the image (`image/png`, `image/webp`), 304,
+  and every error status as a `Problem` with the `ErrorCode` enum, so clients generate the error
+  type (neuroagent-ts: `zProblem`).
 - `Server-Timing` on every response: queue, entitycore metadata, download, render, total; a
   cache hit says `HIT`. Readable by allowed origins (`Timing-Allow-Origin`).
 - `make parity`: the old and new images answer the same requests; every thumbnail must be the

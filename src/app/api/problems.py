@@ -55,6 +55,14 @@ class Problem(Value):
     errors: list[JsonValue] | None = None
 
 
+# The error answers, for the OpenAPI document: clients generate their error type from it
+# (neuroagent-ts: zod). One entry per status that ``STATUS`` can give.
+RESPONSES: dict[int | str, dict[str, object]] = {
+    status: {"model": Problem, "content": {PROBLEM_MEDIA_TYPE: {}}, "description": title}
+    for status, title in sorted({s: HTTPStatus(s).phrase for s in STATUS.values()}.items())
+}
+
+
 def title_of(code: ErrorCode) -> str:
     """A short title from the code.
 

@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
+from app.api.problems import RESPONSES
 from app.application.previews import Plan, Previews, is_current
 from app.domain.errors import ErrorCode
 from app.domain.guards import require
@@ -37,7 +38,24 @@ from app.domain.preview import (
 CACHE_CONTROL = "private, max-age=3600"
 MAX_PIXELS_SIDE = 4096  # a simulation plot side; bounds what one request can make kaleido draw
 
-router = APIRouter(prefix="/core", tags=["Core"])
+IMAGE = {  # the 200 answer: an image in the asked format (png by default)
+    200: {
+        "description": "The image",
+        "content": {
+            "image/png": {"schema": {"type": "string", "format": "binary"}},
+            "image/webp": {"schema": {"type": "string", "format": "binary"}},
+        },
+    },
+    304: {"description": "Not modified: the caller's copy (If-None-Match) is current"},
+}
+
+# default_response_class=Response: the routes answer images, so OpenAPI lists no JSON 200.
+router = APIRouter(
+    prefix="/core",
+    tags=["Core"],
+    responses={**IMAGE, **RESPONSES},
+    default_response_class=Response,
+)
 bearer = HTTPBearer(auto_error=False)  # a missing token is answered as a problem, below
 
 

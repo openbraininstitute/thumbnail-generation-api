@@ -49,3 +49,15 @@ def test_committed_document_is_current() -> None:
 
 def test_every_error_code_has_a_status() -> None:
     assert set(STATUS) == set(ErrorCode)
+
+
+def test_preview_routes_document_images_and_problems() -> None:
+    """Clients generate their error type from these answers (neuroagent-ts: ``zProblem``)."""
+    problem = {"$ref": "#/components/schemas/Problem"}
+    for name, op in operations().items():
+        if "_preview_get" not in name:
+            continue
+        responses = op["responses"]
+        assert set(responses["200"]["content"]) == {"image/png", "image/webp"}
+        for status in {str(s) for s in STATUS.values()}:
+            assert responses[status]["content"]["application/json"]["schema"] == problem
