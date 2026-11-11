@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM ${PYTHON_IMAGE}
 # nginx and supervisor as in the old image. libexpat1: kaleido's bundled Chromium links it and the
-# slim base does not ship it (found by scripts/smoke.py: "libexpat.so.1: cannot open shared object").
+# slim base does not ship it (found by tests/image/smoke.py: "libexpat.so.1: cannot open shared object").
 RUN apt-get update \
  && apt-get install -y --no-install-recommends nginx supervisor libexpat1 \
  && rm -rf /var/lib/apt/lists/* \

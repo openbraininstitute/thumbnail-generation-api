@@ -67,7 +67,7 @@ class _NamedPrintLogger(structlog.PrintLogger):
     structlog's ``print(message)`` makes two writes (the text, then the newline). nginx and two
     granian workers share the container's stdout (supervisord.conf), so another process's line
     could land between them and join two JSON objects on one line, which a log shipper cannot
-    parse (found by scripts/e2e_nginx.py). One write of a line under 4 KiB is atomic on a pipe.
+    parse (found by tests/image/e2e_nginx.py). One write of a line under 4 KiB is atomic on a pipe.
     """
 
     name = ""

@@ -4,7 +4,7 @@ The golden images were made by the old code before it was removed: morphology an
 macOS (the same pixels as on Linux), ephys and simulation in the old production image (Linux):
 ephys because matplotlib 3.11 changed its text layout (matplotlib is pinned to 3.10, see
 pyproject.toml), simulation because Chromium draws text per platform (compared in the Docker image
-by scripts/smoke.py). `make parity` compares the old and new images on every route. Pixels are
+by tests/image/smoke.py). `make parity` compares the old and new images on every route. Pixels are
 compared, not bytes: an encoder version may pack the same pixels differently.
 """
 
@@ -62,7 +62,7 @@ def test_renders_the_old_pixels(
 def test_simulation_draws_an_image_of_the_asked_size(
     route: EntityRoute, spec: RenderSpec, size: tuple[int, int]
 ) -> None:
-    """Pixels: in the Docker image (scripts/smoke.py), as Chromium's text depends on the OS."""
+    """Pixels: in the Docker image (tests/image/smoke.py), as Chromium's text depends on the OS."""
     image = PILImage.open(io.BytesIO(RENDERERS[route](SIM, spec)))
     assert image.size == size
     assert image.format == spec.image_format.value.upper()

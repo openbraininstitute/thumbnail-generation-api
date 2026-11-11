@@ -95,7 +95,7 @@ convention = "google"
     "ARG002",  # fakes keep the port's signatures
 ]
 # Standalone check run inside the Docker image: output is the point, not a package.
-"scripts/**" = [
+"{scripts,tests/image}/**" = [
     "INP001",  # not a package
     "T201",    # the report is printed
     "D103",
@@ -124,7 +124,8 @@ error-on-warning = true
 [tool.pytest]
 minversion = "9.0"
 testpaths = ["tests", "src"]
-addopts = ["--strict-markers", "--doctest-modules", "--import-mode=importlib"]
+# tests/image: scripts run against a built image (make smoke, make e2e), not pytest modules.
+addopts = ["--strict-markers", "--doctest-modules", "--import-mode=importlib", "--ignore=tests/image"]
 pythonpath = ["."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"

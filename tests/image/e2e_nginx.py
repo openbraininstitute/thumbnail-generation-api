@@ -20,7 +20,7 @@ from pathlib import Path
 IMAGE = sys.argv[1] if len(sys.argv) > 1 else "thumbnail-generation-api:local"
 BASE = "/api/thumbnail-generation"
 ENTITY, ASSET = "00000000-0000-0000-0000-00000000e001", "00000000-0000-0000-0000-00000000a001"
-SWC = (Path(__file__).parent.parent / "tests/fixtures/data/morphology.swc").read_bytes()
+SWC = (Path(__file__).parent.parent / "fixtures/data/morphology.swc").read_bytes()
 MEMBER, OUTSIDER = "Bearer member", "Bearer outsider"
 ALLOWED_ORIGIN = "http://localhost:3000"
 

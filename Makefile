@@ -52,29 +52,29 @@ build:  ## Build the image
 
 smoke: build  ## Draw every golden case inside the image (read-only root) and compare pixels
 	docker run --rm --read-only --tmpfs /tmp -v "$(CURDIR)/tests/fixtures:/fixtures:ro" \
-		-v "$(CURDIR)/scripts:/scripts:ro" $(IMAGE) python /scripts/smoke.py /fixtures
+		-v "$(CURDIR)/tests/image:/checks:ro" $(IMAGE) python /checks/smoke.py /fixtures
 
 e2e: build  ## The image against a fake entitycore: nginx cache, CORS, cache lock
-	python3 scripts/e2e_nginx.py $(IMAGE)
+	python3 tests/image/e2e_nginx.py $(IMAGE)
 
 old-image:  ## Build the old service's image from git (OLD_COMMIT), for parity and bench
 	git archive $(OLD_COMMIT) | docker build -q -t $(OLD_IMAGE) -
 
-parity: build  ## Old vs new image: every thumbnail route, same status, type and pixels
+parity: build  ## [local scripts/, not in git] Old vs new image: every thumbnail route, same status, type and pixels
 	@docker image inspect $(OLD_IMAGE) >/dev/null 2>&1 || $(MAKE) --no-print-directory old-image
 	uv run python scripts/parity.py $(OLD_IMAGE) $(IMAGE)
 
-bench: build  ## Old vs new image: miss and hit latency, bursts, memory
+bench: build  ## [local scripts/, not in git] Old vs new image: miss and hit latency, bursts, memory
 	@docker image inspect $(OLD_IMAGE) >/dev/null 2>&1 || $(MAKE) --no-print-directory old-image
 	cd scripts && uv run python bench.py $(OLD_IMAGE) $(IMAGE)
 
-stress-test-old: old-image  ## Stress test the OLD image against staging (resources of the ECS task)
+stress-test-old: old-image  ## [local scripts/, not in git] Stress test the OLD image against staging (resources of the ECS task)
 	uv run python scripts/stress.py run old $(OLD_IMAGE)
 
-stress-test-new: build  ## Stress test the NEW image against staging (resources of the ECS task)
+stress-test-new: build  ## [local scripts/, not in git] Stress test the NEW image against staging (resources of the ECS task)
 	uv run python scripts/stress.py run new $(IMAGE)
 
-stress-report:  ## Old and new stress results side by side (reports/stress-*.json)
+stress-report:  ## [local scripts/, not in git] Old and new stress results side by side (reports/stress-*.json)
 	uv run python scripts/stress.py report
 
 up:  ## Run the image (nginx + app) and the cache dashboard with compose

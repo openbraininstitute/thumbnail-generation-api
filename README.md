@@ -142,7 +142,7 @@ nginx/             nginx.conf (the image cache), includes/; the CORS list is wri
 compose.yaml       api (nginx + app, as in AWS), goaccess, cache-ui
 .env.example       every setting, its default and what it does
 supervisord.conf   runs nginx (port 80) and granian (127.0.0.1:8080) in the container
-scripts/           smoke.py (golden pixels in the image), e2e_nginx.py (cache over HTTP)
+tests/image/       smoke.py (golden pixels in the image), e2e_nginx.py (cache over HTTP)
 src/app/
   api/             routes, RFC 9457 problems, request log, app factory (granian runs create_app)
   application/     preview use cases (plan, draw), the entitycore port
@@ -181,7 +181,8 @@ make parity
 make bench
 ```
 
-`make parity` builds the old service's image from git and sends the same requests to both images:
+`make parity`, `make bench` and the stress tests below need the local `scripts/` folder, which is
+not in git. `make parity` builds the old service's image from git and sends the same requests to both images:
 every thumbnail route must give the same status, type and pixels. `make bench` measures misses,
 hits, bursts and memory of both.
 
