@@ -1,9 +1,9 @@
 name: publish-staging
 
+# Manual only (Actions > publish-staging > Run workflow, on any branch): builds a :staging image to
+# try a branch. The repository uses main only; a push to main publishes the dated image that
+# staging and production deploy (publish-production.yml, infra *.tfvars).
 on:
-    push:
-      branches:
-        - develop
     workflow_dispatch:
   
 permissions:
