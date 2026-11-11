@@ -199,3 +199,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
+
+# Stress test results (scripts/stress.py)
+reports/
+# Local tools (parity, bench, stress test); the image checks CI runs are in tests/image/
+scripts/
+docs/
