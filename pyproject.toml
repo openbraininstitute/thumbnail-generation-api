@@ -1,142 +1,148 @@
 [project]
-name = "thumbnail_generation_api"
-description = "Rest API to generate thumbnails"
-version = "0.0.0"
-authors = [{ name = "Blue Brain Project, EPFL" }]
+name = "thumbnail-generation-api"
+version = "0.7.0"
+description = "Thumbnails of entitycore assets (morphologies, recordings, simulations) for the Open Brain Institute platform."
+authors = [{ name = "Open Brain Institute" }]
 readme = "README.md"
-license = {text = "Apache-2.0"}
-requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+# 3.14, not 3.15 like workspace-manager: h5py has no 3.15 wheel yet (measured 2026-11-10, uv
+# falls back to a source build that needs a system HDF5). Move up when h5py ships one.
+requires-python = ">=3.14"
 dependencies = [
-    "fastapi>=0.115",
-    "gunicorn>=23.0.0",
-    "uvicorn>=0.30.6",
-    "PyJWT>=2.8.0",
-    "neurom>=4.0.5",
-    "matplotlib>=3.7.4",
-    "requests>=2.32.0",
-    "python-dotenv>=1.0.0",
-    "h5py>=3.11.0",
-    "numpy>=2.1.0",
-    "python-multipart>=0.0.9",
-    "pydantic>=2.7.1",
-    "pillow>=10.3.0",
-    "httpx>=0.27.0",
-    "sentry-sdk[fastapi]>=2.13.0",
-    "pydantic-settings>=2.4.0",
-    "plotly==5.23.0",
-    "kaleido==0.2.1",  # for plotly
-    "loguru>=0.7.3",
-    "palettable>=3.3.3"
+    "fastapi>=0.162.2",
+    "granian>=2.8.7",
+    "h5py>=3.16.0",
+    "httpx2>=2.16.0",
+    "kaleido==0.2.1",       # plotly's image export; pinned with plotly, the golden images use it
+    # 3.10 line on purpose: 3.11 lays out the ephys tick labels a few pixels differently, so the
+    # ephys thumbnail would change (measured 2026-11-10 against the old production image; 3.10.7+
+    # match it exactly and have Python 3.14 wheels). Move to 3.11 only with a new golden set.
+    "matplotlib>=3.10.9,<3.11",
+    "neurom>=4.0.6",
+    "numpy>=2.5.4",
+    "palettable>=3.3.3",
+    "pillow>=13.0.0",
+    "plotly==5.23.0",       # plotly 6 needs kaleido 1 (another Chrome): a new golden set first
+    "pydantic>=2.14.3",
+    "pydantic-settings>=2.16.2",
+    "sentry-sdk>=2.74.0",
+    "structlog>=26.1.0",
 ]
+
+[build-system]
+requires = ["uv_build>=0.12.24,<0.14.0"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.11",
-    "pyright>=1.1.401",
-    "pytest>=8.3.2",
-    "pytest-cov>=6.2.1",
+    { include-group = "lint" },
+    { include-group = "test" },
+    { include-group = "audit" },
+    { include-group = "serve" },
 ]
+audit = ["pip-audit>=2.10.1"]
+lint = ["ruff>=0.17.3", "ty>=0.0.97"]
+test = ["pytest>=9.2.0", "pytest-asyncio>=1.4.1", "pytest-cov>=7.1.0"]
+serve = ["granian[reload]>=2.8.7"]  # make dev: reload on change
+
+[tool.uv.build-backend]
+module-name = "app"  # the import name; the distribution keeps the repository name
+
+[tool.uv]
+required-version = ">=0.12.24"
+default-groups = ["dev"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
-include = ["pyproject.toml", "api/**/*.py", "tests/**/*.py"]
+target-version = "py314"
+src = ["src", "tests"]
+extend-exclude = ["docs"]
 
 [tool.ruff.lint]
-preview = true
+# Route handlers take one argument per query parameter; FastAPI binds them by name.
+pylint.max-args = 8
 select = ["ALL"]
 ignore = [
-    "D",       # pydocstyle
-    "ANN",     # All the annotations
-    "COM812",  # Trailing comma (to have similar behavior to black)
-    "CPY001",  # Missing copyright notice at top of file
-    "DOC201",  # `return` is not documented in docstring
-    "DOC402",  # `yield` is not documented in docstring
-    "DOC501",  # Raised exception missing from docstring
-    "ICN001",  # `matplotlib` should be imported as `mpl`
-    "PLW2901", # `with` statement variable overwritten by assignment target
-    "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
-    "RET504",  # Unnecessary assignment before `return` statement
-    "RUF029",  # Function is declared `async`, but doesn't `await` or use `async` features.
-    "TD",      # TODOs
-    "FIX002",  # Line contains TODO, consider resolving the issue
-    # to be fixed later
-    "EM101",   # Exception must not use a string literal, assign to variable first
-    "FAST002", # FastAPI dependency without `Annotated`
-    "B008",    # Do not perform function call `Depends` in argument defaults
-    "TRY003",  # Avoid specifying long messages outside the exception class
-    "TRY300",  # Consider moving this statement to an `else` block
-    "TRY301",  # Abstract `raise` to an inner function
-    "RUF015",  # Prefer `next(iter())` over single element slice
-    "PTH",     # `os.path` should be replaced by pathlib
-    "SIM108",  # Use ternary operator
-    "UP042",   # Class inherits from both `str` and `enum.Enum
+    "COM812", # conflicts with the formatter
+    "ISC001", # conflicts with the formatter
+    "D203",   # google convention: no blank line before class docstring
+    "D213",   # google convention: summary on the first line
+    "CPY001", # the license is in one LICENSE file, not a header per file
+    "TC001",  # annotations are lazy since Python 3.14 (PEP 649); moving
+    "TC002",  #   imports into TYPE_CHECKING saves nothing measurable here
+    "TC003",
+    "EM101",  # errors carry a stable code; the message string is part of that call
+    "EM102",
+    "TRY003",
+    "PLR0917", # positional count: FastAPI binds route arguments by name, never by position
 ]
 
 [tool.ruff.lint.isort]
 known-local-folder = ["tests"]
-combine-as-imports = true
-
-[tool.ruff.lint.per-file-ignores]
-"scripts/**.py" = [
-    "ANN",     # Missing type annotation
-    "ARG002",  # Unused method argument (mock signatures)
-    "E402",    # Module import not at top (sys.path / logging setup first)
-    "FBT001",  # Boolean-typed positional argument
-    "FBT003",  # Boolean positional value in call
-    "INP001",  # Missing `__init__.py` (standalone tooling script)
-    "PLR0913", # Too many arguments in function definition
-    "PLR0917", # Too many positional arguments
-    "PLR6301", # Method could be static (mock methods)
-    "PLW0108", # Lambda may be unnecessary
-    "RUF100",  # Unused noqa (annotation noqas not enabled here)
-    "T201",    # `print` found (benchmark output)
-]
-"tests/**.py" = [
-    "ANN",     # Missing type annotation
-    "ARG001",  # Unused function argument
-    "ARG002",  # Unused method argument
-    "ARG005",  # Unused lambda argument
-    "D",       # pydocstyle
-    "ERA001",  # Found commented-out code
-    "INP001",  # Missing `__init__.py`
-    "PLC2701", # Private name import from external module
-    "PLR0913", # Too many arguments in function definition
-    "PLR0915", # Too many statements
-    "PLR0917", # Too many positional arguments
-    "PLR2004", # magic value (constant) used in comparison (i.e. expected == 3)
-    "PTH123",  # `open()` should be replaced by `Path.open()`
-    "S101",    # Use of `assert` detected
-    "SLF001",  # private member access
-]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = [
-    "-vv",
-    "-ra",
-    "--cov=api",
-    "--durations=10",
-    "--durations-min=0.1",
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "S101",    # assert is how pytest checks
+    "D",       # test names say what they check
+    "PLR2004", # literal limits are the point of boundary tests
+    "INP001",  # tests are not a package
+    "S105",    # fake tokens in tests are not secrets
+    "S106",
+    "ARG005",  # mock transports take the request they ignore
+    "ARG002",  # fakes keep the port's signatures
 ]
-# asyncio_mode = "auto"
-testpaths = [
-    "tests",
+# Standalone check run inside the Docker image: output is the point, not a package.
+"scripts/**" = [
+    "INP001",  # not a package
+    "T201",    # the report is printed
+    "D103",
+    "PLR2004", # HTTP statuses are what the checks compare
+    "S603",    # runs the docker CLI with fixed arguments
+    "S607",
+    "S108",    # /tmp is a tmpfs mount point of the container, not a temp file
+]
+# The plot code is the code that made the golden images, kept as it was: renaming its locals or
+# reshaping its loops is a risk to the pixels for no gain (tests/rendering/test_golden.py).
+"src/app/rendering/*.py" = [
+    "PLR2004", # the plot constants (font size 16, 3 passes) are the look
+    "N806",    # matplotlib and numpy names as the original code wrote them
+]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"dataclasses".msg = "Subclass app.domain.types.Value (frozen Pydantic) instead."
+
+[tool.ty.environment]
+python-version = "3.14"
+python = "./.venv"
+
+[tool.ty.terminal]
+error-on-warning = true
+
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["tests", "src"]
+addopts = ["--strict-markers", "--doctest-modules", "--import-mode=importlib"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+markers = [
+    "kaleido: renders with plotly's bundled Chromium (blocked by some sandboxes)",
+]
+filterwarnings = [
+    "error", # a deprecation is fixed when it appears, not later
+    # kaleido 0.2.1 (pinned with plotly 5.23) calls Thread.setDaemon, deprecated in Python 3.14.
+    # ponytail: harmless until Python removes it; then plotly 6 + kaleido 1 and a new golden set.
+    "ignore:setDaemon\\(\\) is deprecated:DeprecationWarning",
 ]
 
 [tool.coverage.run]
+source = ["app"]
 branch = true
-parallel = false
-source_pkgs = [
-    "api",
-]
 
 [tool.coverage.report]
+fail_under = 85
 show_missing = true
-precision = 0
-fail_under = 60
-omit = [
-]
