@@ -4,8 +4,10 @@ One pooled client per process. Every call carries the caller's token; entitycore
 Its 4xx keep their meaning; a timeout, network error, 429 or 5xx is ``ENTITYCORE_UNAVAILABLE``.
 """
 
+import asyncio
 import time
 from collections.abc import Callable, Mapping
+from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Any
 from uuid import UUID
@@ -67,6 +69,17 @@ def asset_of(row: Mapping[str, Any]) -> Asset:
     )
 
 
+def _created(row: Mapping[str, Any]) -> datetime:
+    """A row's ``creation_date``; the oldest possible when missing.
+
+    Examples:
+        >>> _created({"creation_date": "2026-01-02T00:00:00Z"}).year
+        2026
+    """
+    stamp = row.get("creation_date")
+    return datetime.fromisoformat(stamp) if stamp else datetime.min.replace(tzinfo=UTC)
+
+
 class HttpEntityCore:
     """entitycore over HTTP.
 
@@ -74,20 +87,35 @@ class HttpEntityCore:
         client: The process's HTTP client (the caller owns and closes it).
         base_url: Root of the entitycore API.
         max_asset_bytes: Largest asset downloaded.
+        download_seconds: Deadline of one whole download (httpx's timeout is per read).
     """
 
-    def __init__(self, client: httpx2.AsyncClient, *, base_url: str, max_asset_bytes: int) -> None:
+    def __init__(
+        self,
+        client: httpx2.AsyncClient,
+        *,
+        base_url: str,
+        max_asset_bytes: int,
+        download_seconds: float = 60.0,
+    ) -> None:
         """Store the configuration."""
         self._client = client
         self._base = base_url.rstrip("/")
         self._max = max_asset_bytes
+        self._deadline = download_seconds
 
     async def asset(
         self, caller: Caller, route: EntityRoute, entity_id: UUID, asset_id: UUID
     ) -> Asset:
-        """The asset's metadata (size, sha256), read with the caller's token."""
+        """The asset's metadata (size, sha256), read with the caller's token.
+
+        Raises:
+            DomainError: ``ASSET_TOO_LARGE`` over the limit, before it waits for memory.
+        """
         row = await self._json(caller, f"/{route}/{entity_id}/assets/{asset_id}", what="Asset")
-        return self._parsed(lambda: asset_of(row))
+        asset = self._parsed(lambda: asset_of(row))
+        self._within_limit(asset.size)
+        return asset
 
     async def content(
         self, caller: Caller, route: EntityRoute, entity_id: UUID, asset: Asset
@@ -113,21 +141,25 @@ class HttpEntityCore:
         chunks: list[bytes] = []
         total = 0
         try:
-            # No Authorization: the URL is presigned (storage refuses two auths).
-            async with self._client.stream("GET", location) as stored:
-                status = stored.status_code
-                ensure(stored.is_success, lambda: refused(status, ErrorCode.ContentEmpty, "File"))
-                async for chunk in stored.aiter_bytes():
-                    total += len(chunk)
-                    self._within_limit(total)
-                    chunks.append(chunk)
-        except httpx2.HTTPError as error:
-            match_error(error, {httpx2.HTTPError: unavailable})
+            # A slow storage stream would hold its slot and memory after nginx's 504.
+            async with asyncio.timeout(self._deadline):
+                # No Authorization: the URL is presigned (storage refuses two auths).
+                async with self._client.stream("GET", location) as stored:
+                    status = stored.status_code
+                    ensure(
+                        stored.is_success, lambda: refused(status, ErrorCode.ContentEmpty, "File")
+                    )
+                    async for chunk in stored.aiter_bytes():
+                        total += len(chunk)
+                        self._within_limit(total)
+                        chunks.append(chunk)
+        except (httpx2.HTTPError, TimeoutError) as error:
+            match_error(error, {httpx2.HTTPError: unavailable, TimeoutError: unavailable})
         ensure(total > 0, ErrorCode.ContentEmpty, "The asset has no content")
         return b"".join(chunks)
 
     async def model_trace(self, caller: Caller, entity_id: UUID) -> tuple[UUID, Asset]:
-        """The ``thumbnail`` validation result of ``entity_id`` and its PNG asset."""
+        """The latest ``thumbnail`` validation result of ``entity_id`` and its PNG asset."""
         page = await self._json(
             caller,
             f"/{EntityRoute.ValidationResult}",
@@ -135,13 +167,15 @@ class HttpEntityCore:
             what="Validation result",
             not_found=ErrorCode.ValidationResultNotFound,
         )
+        # entitycore sorts this list by name only: pick the latest here (a re-run adds a row).
+        # ponytail: reads the first page (30 rows); page through if an entity gets more re-runs.
         rows = self._parsed(lambda: list(page["data"]))
-        first = require(
-            next(iter(rows), None),
+        latest = require(
+            self._parsed(lambda: max(rows, key=_created, default=None)),
             ErrorCode.ValidationResultNotFound,
             "No thumbnail validation result for this entity",
         )
-        result_id = self._parsed(lambda: UUID(first["id"]))
+        result_id = self._parsed(lambda: UUID(latest["id"]))
         listing = await self._json(
             caller, f"/{EntityRoute.ValidationResult}/{result_id}/assets", what="Asset"
         )
@@ -151,6 +185,7 @@ class HttpEntityCore:
             ErrorCode.AssetNotFound,
             "The validation result has no PNG asset",
         )
+        self._within_limit(png.size)
         return result_id, png
 
     async def _json(

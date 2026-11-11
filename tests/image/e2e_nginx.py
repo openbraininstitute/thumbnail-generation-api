@@ -140,6 +140,8 @@ def main() -> int:
             f"ENTITY_CORE_URI=http://host.docker.internal:{fake.server_port}",
             "-e",
             f'WHITELISTED_CORS_URLS=["{ALLOWED_ORIGIN}"]',
+            "-e",
+            "CORS_ORIGIN_REGEX=http://(localhost|127[.]0[.]0[.]1)(:[0-9]+)?",  # local value
             IMAGE,
         ],
         check=True,

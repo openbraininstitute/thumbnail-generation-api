@@ -25,6 +25,8 @@ from app.domain.preview import (
 )
 
 CACHE_CONTROL = "private, max-age=3600"
+# nginx keeps a model trace 1 h, not 30 d: its key has no asset id, and a re-run adds a new trace.
+MODEL_TRACE_NGINX_SECONDS = 3600
 MAX_PIXELS_SIDE = 4096  # a simulation plot side; bounds what one request can make kaleido draw
 
 IMAGE = {  # the 200 answer: an image in the asked format (png by default)
@@ -87,9 +89,15 @@ Format = Annotated[ImageFormat, Query(alias="format")]
 Side = Annotated[int | None, Query(ge=1, le=MAX_PIXELS_SIDE)]
 
 
-async def answer(request: Request, previews: Previews, caller: Caller, plan: Plan) -> Response:
+async def answer(
+    request: Request,
+    previews: Previews,
+    caller: Caller,
+    plan: Plan,
+    extra: dict[str, str] | None = None,
+) -> Response:
     """The image, or a 304 when the caller's copy is current (checked before any download)."""
-    headers = {"ETag": plan.etag, "Cache-Control": CACHE_CONTROL}
+    headers = {"ETag": plan.etag, "Cache-Control": CACHE_CONTROL, **(extra or {})}
     if is_current(request.headers.get("if-none-match"), plan.etag):
         return Response(status_code=304, headers=headers)
     content = await previews.draw(caller, plan)
@@ -163,7 +171,9 @@ async def get_model_trace_preview(
 ) -> Response:
     """The stored trace thumbnail of an e-model or me-model (its ``thumbnail`` validation)."""
     plan = await previews.plan_model_trace(caller, entity_id)
-    return await answer(request, previews, caller, plan)
+    # X-Accel-Expires: nginx's lifetime for this answer (nginx hides it from the client).
+    expires = {"X-Accel-Expires": str(MODEL_TRACE_NGINX_SECONDS)}
+    return await answer(request, previews, caller, plan, expires)
 
 
 # Last: its first path segment is a variable, so it would match the fixed paths above.

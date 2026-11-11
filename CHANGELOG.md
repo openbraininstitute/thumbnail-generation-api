@@ -14,7 +14,10 @@ Re-architecture. Same URLs, parameters, operation ids and images.
 - Removed the Nexus routes that fetched any caller-given URL with the caller's token.
 - Responses are `Cache-Control: private, max-age=3600` with an `ETag`: shared proxies never store
   an image. Presigned download URLs are no longer logged.
-- Asset size limit (`ENTITY_CORE_MAX_ASSET_BYTES`) and bounds on simulation `w` and `h` (1 to 4096).
+- Asset size limit (`ENTITY_CORE_MAX_ASSET_BYTES`, at most a third of `RENDER_MEMORY_BYTES`, checked
+  at start) and bounds on simulation `w` and `h` (1 to 4096). A download stops after
+  `ENTITY_CORE_DOWNLOAD_SECONDS` (60 s) in total.
+- `CORS_ORIGIN_REGEX` has no default, as before: set it for localhost (`.env.example`).
 - The app runs as www-data, not root. NWB datasets over 256 MiB once decoded are refused before
   reading (a small compressed file could fill the memory). CORS values that could change nginx's
   config stop the start. `X-Content-Type-Options: nosniff` everywhere.
@@ -26,6 +29,9 @@ Re-architecture. Same URLs, parameters, operation ids and images.
 - Errors return their real status (401, 403, 404, 409, 422, 503, 500). Every `ApiError` was 400.
 - entitycore 401 and 403 are passed on instead of becoming 404 or 500.
 - An ion channel recording with one trace no longer fails (division by zero).
+- A model trace uses the latest `thumbnail` validation result; nginx keeps it 1 h, not 30 days.
+- Drawings wait first come, first served: small files no longer starve a large one.
+- A 500 carries `X-Request-ID` and `Server-Timing`, and its log line has the request id.
 
 ### Changed
 

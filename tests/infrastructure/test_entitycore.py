@@ -1,6 +1,7 @@
 """The entitycore adapter over a mock transport: headers, statuses, download, limits."""
 
-from collections.abc import Callable
+import asyncio
+from collections.abc import AsyncIterator, Callable
 from uuid import UUID, uuid4
 
 import httpx2
@@ -29,7 +30,9 @@ def asset_row(asset_id: UUID = ASSET_ID, **extra: object) -> dict[str, object]:
 
 
 def adapter(
-    handler: Callable[[httpx2.Request], httpx2.Response], max_bytes: int = 100
+    handler: Callable[[httpx2.Request], httpx2.Response],
+    max_bytes: int = 100,
+    download_seconds: float = 60.0,
 ) -> tuple[HttpEntityCore, list[httpx2.Request]]:
     seen: list[httpx2.Request] = []
 
@@ -38,7 +41,10 @@ def adapter(
         return handler(request)
 
     client = httpx2.AsyncClient(transport=httpx2.MockTransport(record))
-    return HttpEntityCore(client, base_url=BASE + "/", max_asset_bytes=max_bytes), seen
+    core = HttpEntityCore(
+        client, base_url=BASE + "/", max_asset_bytes=max_bytes, download_seconds=download_seconds
+    )
+    return core, seen
 
 
 async def test_asset_read_carries_the_callers_token_and_project() -> None:
@@ -161,3 +167,49 @@ async def test_a_non_web_download_location_is_not_followed() -> None:
         await core.content(CALLER, EntityRoute.CellMorphology, ENTITY, ASSET)
     assert caught.value.code is ErrorCode.EntitycoreUnavailable
     assert len(seen) == 1  # the location was never requested
+
+
+async def test_metadata_over_the_limit_is_refused_before_any_download() -> None:
+    core, seen = adapter(lambda r: httpx2.Response(200, json=asset_row(size=11)), max_bytes=10)
+    with pytest.raises(DomainError) as caught:
+        await core.asset(CALLER, EntityRoute.CellMorphology, ENTITY, ASSET_ID)
+    assert caught.value.code is ErrorCode.AssetTooLarge
+    assert len(seen) == 1
+
+
+async def test_a_slow_download_stops_at_the_deadline() -> None:
+    async def trickle() -> AsyncIterator[bytes]:
+        while True:  # each chunk is within httpx's per-read timeout; the whole is not
+            yield b"x"
+            await asyncio.sleep(0.01)
+
+    def handle(request: httpx2.Request) -> httpx2.Response:
+        if request.url.host == "storage.test":
+            return httpx2.Response(200, content=trickle())
+        return httpx2.Response(307, headers={"location": STORAGE})
+
+    core, _ = adapter(handle, max_bytes=10**6, download_seconds=0.1)
+    with pytest.raises(DomainError) as caught:
+        await asyncio.wait_for(
+            core.content(CALLER, EntityRoute.CellMorphology, ENTITY, ASSET), timeout=5
+        )
+    assert caught.value.code is ErrorCode.EntitycoreUnavailable
+
+
+async def test_model_trace_uses_the_latest_thumbnail_validation() -> None:
+    old, new = uuid4(), uuid4()
+    rows = [
+        {"id": str(old), "creation_date": "2026-01-01T00:00:00Z"},
+        {"id": str(new), "creation_date": "2026-03-01T00:00:00Z"},
+        {"id": str(uuid4()), "creation_date": "2026-02-01T00:00:00Z"},
+    ]
+
+    def handle(request: httpx2.Request) -> httpx2.Response:
+        if request.url.path == "/validation-result":
+            return httpx2.Response(200, json={"data": rows})
+        assert request.url.path == f"/validation-result/{new}/assets"
+        return httpx2.Response(200, json={"data": [asset_row(content_type="image/png")]})
+
+    core, _ = adapter(handle)
+    found, _ = await core.model_trace(CALLER, ENTITY)
+    assert found == new

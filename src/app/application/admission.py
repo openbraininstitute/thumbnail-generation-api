@@ -7,6 +7,7 @@ served.
 
 import asyncio
 import time
+from collections import deque
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -36,6 +37,8 @@ class Admission:
         self._in_use = 0
         self._slots = asyncio.Semaphore(downloads)
         self._changed = asyncio.Condition()
+        # FIFO: only the head may take budget, so small drawings cannot starve a large one.
+        self._waiting: deque[object] = deque()
 
     @property
     def in_use(self) -> int:
@@ -48,9 +51,17 @@ class Admission:
         cost = min(file_size * MEMORY_FACTOR, self._budget)  # larger than the budget: runs alone
         started = time.perf_counter()
         async with self._slots:
+            ticket = object()
             async with self._changed:
-                await self._changed.wait_for(lambda: self._in_use + cost <= self._budget)
-                self._in_use += cost
+                self._waiting.append(ticket)
+                try:
+                    await self._changed.wait_for(
+                        lambda: self._waiting[0] is ticket and self._in_use + cost <= self._budget
+                    )
+                    self._in_use += cost
+                finally:  # served or cancelled: the next waiter becomes the head
+                    self._waiting.remove(ticket)  # at most `downloads` waiters
+                    self._changed.notify_all()
             record("queue", started)
             try:
                 yield

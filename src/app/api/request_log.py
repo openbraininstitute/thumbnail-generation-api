@@ -11,6 +11,8 @@ from uuid import uuid7
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app import timing as timings
+from app.api.problems import problem
+from app.domain.errors import ErrorCode
 from app.logs import bind, get_logger
 
 log = get_logger("api.request")
@@ -35,7 +37,11 @@ def request_id_of(scope: Scope) -> str:
 
 
 class RequestLog:
-    """ASGI middleware: bind ``request_id``, log ``request`` with status and duration."""
+    """ASGI middleware: bind ``request_id``, log ``request`` with status and duration.
+
+    An unexpected error is logged and answered as a 500 problem here, so the line and the answer
+    carry the request id; it is then raised again for Sentry and the server.
+    """
 
     def __init__(self, app: ASGIApp) -> None:
         """Wrap ``app``."""
@@ -49,11 +55,12 @@ class RequestLog:
         request_id = request_id_of(scope)
         started = time.perf_counter()
         status = 500  # what a crash before the first byte means
+        started_response = False
 
         async def send_with_id(message: Message) -> None:
-            nonlocal status
+            nonlocal status, started_response
             if message["type"] == "http.response.start":
-                status = message["status"]
+                status, started_response = message["status"], True
                 # Every route answers whole, so the body is built by now: "app" is the app's time.
                 elapsed = (time.perf_counter() - started) * 1000
                 timing = timings.header(phases, elapsed).encode()
@@ -67,6 +74,13 @@ class RequestLog:
         with bind(request_id=request_id), timings.collect() as phases:
             try:
                 await self.app(scope, receive, send_with_id)
+            except Exception:
+                log.exception("request failed")
+                if not started_response:  # raw exception text never leaves
+                    await problem(ErrorCode.Internal, "Internal error")(
+                        scope, receive, send_with_id
+                    )
+                raise
             finally:
                 path: str = scope["path"]  # never the query string
                 if status >= 500:  # noqa: PLR2004 - HTTP server error

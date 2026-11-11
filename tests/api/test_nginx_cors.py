@@ -1,4 +1,5 @@
-"""nginx's CORS map: every localhost port by default, nothing that only looks like localhost."""
+"""nginx's CORS map: the list by default; the local pattern allows every localhost port, nothing
+that only looks like localhost."""
 
 import re
 
@@ -6,6 +7,8 @@ import pytest
 
 from app.api.nginx_cors import map_conf
 from app.settings import ApiSettings
+
+LOCAL = "http://(localhost|127[.]0[.]0[.]1)(:[0-9]+)?"  # the local value in .env.example
 
 
 def allowed(origin: str, api: ApiSettings) -> bool:
@@ -28,8 +31,14 @@ def allowed(origin: str, api: ApiSettings) -> bool:
     "origin",
     ["http://localhost:3000", "http://localhost:5173", "http://localhost", "http://127.0.0.1:8080"],
 )
-def test_every_localhost_port_is_allowed_by_default(origin: str) -> None:
-    assert allowed(origin, ApiSettings())
+def test_the_local_pattern_allows_every_localhost_port(origin: str) -> None:
+    assert allowed(origin, ApiSettings(cors_origin_regex=LOCAL))
+
+
+def test_by_default_only_the_list_is_allowed() -> None:
+    assert ApiSettings().cors_origin_regex is None  # production never sets it
+    assert allowed("http://localhost:3000", ApiSettings())
+    assert not allowed("http://localhost:5173", ApiSettings())
 
 
 @pytest.mark.parametrize(
@@ -45,7 +54,7 @@ def test_every_localhost_port_is_allowed_by_default(origin: str) -> None:
     ],
 )
 def test_lookalikes_are_refused(origin: str) -> None:
-    assert not allowed(origin, ApiSettings())
+    assert not allowed(origin, ApiSettings(cors_origin_regex=LOCAL))
 
 
 def test_an_empty_pattern_allows_only_the_list() -> None:

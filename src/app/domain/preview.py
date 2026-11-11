@@ -14,7 +14,10 @@ from pydantic import Field
 from app.domain.types import Value
 
 RENDER_VERSION = "1"
-"""Bump when a renderer draws differently: every cached image and browser ETag is then stale."""
+"""Bump when a renderer draws differently: every browser ETag is then stale.
+
+nginx's cache key has no version: its cache is emptied by a deploy (a new task, no volume).
+"""
 
 
 class ImageFormat(StrEnum):

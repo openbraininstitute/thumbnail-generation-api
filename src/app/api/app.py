@@ -68,7 +68,8 @@ def create_app(settings: Settings | None = None, entitycore: EntityCore | None =
         port = entitycore or HttpEntityCore(
             http,
             base_url=settings.entitycore.uri,
-            max_asset_bytes=settings.entitycore.max_asset_bytes,
+            max_asset_bytes=settings.max_asset_bytes,
+            download_seconds=settings.entitycore.download_seconds,
         )
         admission = Admission(
             memory_bytes=settings.render.memory_bytes, downloads=settings.render.downloads

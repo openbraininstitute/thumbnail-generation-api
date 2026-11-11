@@ -102,7 +102,7 @@ def render(content: bytes, spec: RenderSpec) -> bytes:
     ax.set_ylabel(cast("str", y_unit), fontsize=FONTSIZE)
     ax.xaxis.set_ticks(_ticks(timestamps.min(), timestamps.max(), "x"))
     ax.set_xticklabels([f"{label:2.0f}" for label in ax.get_xticks()])
-    ax.yaxis.set_ticks(_ticks(min(data), max(data), "y"))
+    ax.yaxis.set_ticks(_ticks(data.min(), data.max(), "y"))
     ax.set_yticklabels([f"{label:2.0f}" for label in ax.get_yticks()])
     fig.set_layout_engine("tight")
     return encode(fig, spec.dpi, spec.image_format)

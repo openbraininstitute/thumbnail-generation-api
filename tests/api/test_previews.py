@@ -171,6 +171,7 @@ async def test_model_trace_is_the_stored_png(fake: FakeEntityCore) -> None:
     assert found.status_code == 200
     assert found.headers["content-type"] == "image/png"
     assert found.content == png
+    assert found.headers["x-accel-expires"] == "3600"  # nginx keeps a trace 1 h, not 30 d
     assert missing.status_code == 404
     assert missing.json()["code"] == "VALIDATION_RESULT_NOT_FOUND"
 
@@ -214,8 +215,13 @@ class CrashingEntityCore(FakeEntityCore):
 async def test_a_crash_is_a_masked_500() -> None:
     fake = CrashingEntityCore()
     async with client(fake) as http:
-        response = await http.get(MORPHOLOGY, params=query(uuid4(), uuid4()), headers=bearer())
+        response = await http.get(
+            MORPHOLOGY, params=query(uuid4(), uuid4()), headers=bearer(**{"X-Request-ID": "r-1"})
+        )
     assert response.status_code == 500
+    assert response.headers["x-request-id"] == "r-1"  # matches the nginx log line
+    assert response.headers["content-type"] == "application/problem+json"
+    assert "server-timing" in response.headers
     assert response.json() == {
         "type": "about:blank",
         "title": "Internal",

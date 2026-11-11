@@ -111,14 +111,10 @@ async def _http(_: Request, error: Exception) -> JSONResponse:
     return problem(code, str(error.detail), status=error.status_code)
 
 
-async def _crash(_: Request, error: Exception) -> JSONResponse:
-    log.error("request failed", exc_info=error)
-    return problem(ErrorCode.Internal, "Internal error")  # raw exception text never leaves
-
-
 def install(app: FastAPI) -> None:
     """Answer every error of ``app`` as a problem."""
     app.add_exception_handler(DomainError, _domain)
     app.add_exception_handler(RequestValidationError, _invalid)
     app.add_exception_handler(HTTPException, _http)
-    app.add_exception_handler(Exception, _crash)
+    # Any other error: answered by RequestLog, inside the request's id (Starlette's own handler
+    # for Exception runs outside every middleware).

@@ -180,8 +180,8 @@ curl -i "http://127.0.0.1:8003/core/cell-morphology/preview?entity_id=$ENTITY_ID
   reason for each value). The image tag to deploy is in `staging.tfvars`
   and `production.tfvars`.
 - **Size:** a 2 vCPU / 4 GiB task, the whole of it for the container: nginx and 2 app processes,
-  one per vCPU. `RENDER_MEMORY_BYTES` and `ENTITY_CORE_MAX_ASSET_BYTES` are set for 4 GiB there; the
-  defaults in [.env.example](.env.example) are for 2 GiB.
+  one per vCPU. `RENDER_MEMORY_BYTES` is set for 4 GiB there (the largest asset follows it: a
+  third of it); the defaults in [.env.example](.env.example) are for 2 GiB.
 - **A new setting:** add it to `settings.py`, `.env.example` (a test checks the two match) and the
   infra `container.tf`.
 

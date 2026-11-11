@@ -10,14 +10,14 @@ from functools import lru_cache
 from re import Pattern
 from typing import Literal, Self
 
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.application.admission import MEMORY_FACTOR
 from app.domain.guards import ensure
 from app.domain.types import Value
 
 SCOPE_NAME = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.]*")
-LOCAL_ORIGINS = re.compile(r"http://(localhost|127[.]0[.]0[.]1)(:[0-9]+)?")
 ORIGIN = re.compile(r"\*|https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?")
 MIB = 1024 * 1024
 
@@ -106,8 +106,8 @@ class ApiSettings(BaseSettings):
         description="JSON list of browser origins allowed to call the API cross-origin.",
     )
     cors_origin_regex: Pattern[str] | None = Field(
-        default=LOCAL_ORIGINS,
-        description="Origins allowed by a pattern matching the whole origin; default: localhost.",
+        default=None,
+        description="Origins allowed by a pattern matching the whole origin; default: none.",
     )
 
     @field_validator("cors_origins")
@@ -148,18 +148,30 @@ class EntitycoreSettings(BaseSettings):
         description="Root of the entitycore API.",
     )
     timeout_seconds: float = Field(
-        default=30.0, gt=0, description="Per request to entitycore and to the storage download."
+        default=30.0, gt=0, description="Per step (connect, read, write) of a call to entitycore."
+    )
+    download_seconds: float = Field(
+        default=60.0,
+        gt=0,
+        description="Whole download of one file; below nginx's proxy_read_timeout (120 s).",
     )
     max_connections: int = Field(
         default=32,
         ge=1,
         description="Connections per process to entitycore and storage (200 overloaded staging).",
     )
-    max_asset_bytes: int = Field(
-        default=1024 * MIB,
+    max_asset_bytes: int | None = Field(
+        default=None,
         gt=0,
-        description="Largest asset drawn; a larger one gets ASSET_TOO_LARGE, not an OOM kill.",
+        description="Largest asset drawn (ASSET_TOO_LARGE above); default and maximum: "
+        "RENDER_MEMORY_BYTES / 3, what one drawing of it needs.",
     )
+
+    @field_validator("max_asset_bytes", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        """Compose passes an unset variable as ``""``."""
+        return None if value == "" else value
 
 
 class RenderSettings(BaseSettings):
@@ -225,6 +237,25 @@ class Settings(BaseSettings):
     render: RenderSettings = Field(default_factory=RenderSettings)
     sentry: SentrySettings = Field(default_factory=SentrySettings)
     log: LogSettings = Field(default_factory=LogSettings)
+
+    @model_validator(mode="after")
+    def _largest_asset_fits_the_budget(self) -> Self:
+        """A drawing needs 3x its file: a larger limit would let one drawing OOM the container."""
+        limit = self.entitycore.max_asset_bytes
+        fits = limit is None or limit * MEMORY_FACTOR <= self.render.memory_bytes
+        ensure(
+            fits,
+            lambda: ValueError(
+                "ENTITY_CORE_MAX_ASSET_BYTES x 3 is over RENDER_MEMORY_BYTES; lower it or leave it "
+                "empty"
+            ),
+        )
+        return self
+
+    @property
+    def max_asset_bytes(self) -> int:
+        """The largest asset drawn: the set limit, else what the memory budget allows."""
+        return self.entitycore.max_asset_bytes or self.render.memory_bytes // MEMORY_FACTOR
 
 
 @lru_cache(maxsize=1)
