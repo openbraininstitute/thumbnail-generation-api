@@ -1,48 +1,41 @@
-name: Run linter, formatter check and unit tests
+name: check
 
-on: push
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
-  lint:
-    name: Lint
+  check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
         with:
-          version: "latest"
-          enable-cache: true
-      - name: Setup python
-        uses: actions/setup-python@v5
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10
         with:
-          python-version-file: "pyproject.toml"
-      - name: Check requirements
-        run: make check-deps
-      - name: Install requirements
-        run: make install
-      - name: Run linters
-        run: make lint-all
+          version: "0.13.7"
+      - run: uv sync --locked
+      - name: lint and format
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: types
+        run: uv run ty check
+      - name: tests (golden images, openapi.json drift, doctests)
+        run: uv run pytest --cov
+      - name: dependency audit
+        run: uv run pip-audit
 
-  unit_tests:
-    name: Run Unit Tests
+  image:
+    # The deployed artifact: builds the image and draws every golden case inside it.
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
         with:
-          version: "latest"
-          enable-cache: true
-      - name: Setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "pyproject.toml"
-      - name: Check requirements
-        run: make check-deps
-      - name: Install requirements
-        run: make install
-      - name: Run tests
-        run: make test
+          persist-credentials: false
+      - run: make smoke
+      - run: make e2e
