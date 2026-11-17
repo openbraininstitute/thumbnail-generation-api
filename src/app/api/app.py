@@ -96,7 +96,7 @@ def create_app(settings: Settings | None = None, entitycore: EntityCore | None =
     )
     app.state.settings = settings
     problems.install(app)
-    app.add_middleware(AccessGate)  # innermost: RequestLog logs the gate's own path and status
+    app.add_middleware(AccessGate)  # added first, so it runs inside RequestLog and gets logged
     app.add_middleware(RequestLog)
     # Outermost, so a preflight never reaches the routes. Bearer tokens only: no credentials.
     app.add_middleware(

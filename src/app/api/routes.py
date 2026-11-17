@@ -1,9 +1,9 @@
 """The preview routes, ``/core/{entity}/preview``, called by core-web-app and neuroagent-ts.
 
 Do not rename functions, paths or parameters: neuroagent-ts names its generated types after the
-operation ids (``tests/api/test_openapi.py`` checks them). nginx asks each route for access first
-(``api/access.py``), then serves its stored image: a drawing runs only on a cache miss. The browser
-keeps the image an hour (``private``), then revalidates with the ETag.
+operation ids (``tests/api/test_openapi.py`` checks them). nginx checks access with each route
+first (``api/access.py``), then serves the cached image, so we only draw on a cache miss. The
+browser keeps an image for an hour (``private``), then asks again with the ETag.
 """
 
 from typing import Annotated, Literal
@@ -92,8 +92,8 @@ Side = Annotated[int | None, Query(ge=1, le=MAX_PIXELS_SIDE)]
 async def answer(request: Request, previews: Previews, caller: Caller, plan: Plan) -> Response:
     """The image, or a 304 when the caller's copy is current (checked before any download).
 
-    For nginx's access gate: 204 and the ETag only. ``plan`` exists, so entitycore let the caller
-    read the asset.
+    For nginx's access check, just 204 and the ETag: we got a ``plan``, so entitycore already
+    said yes.
     """
     if request.scope.get(access.CHECK):
         return Response(status_code=access.ALLOWED, headers={"ETag": plan.etag})

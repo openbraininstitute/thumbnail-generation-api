@@ -1,4 +1,4 @@
-"""The access gate (``/_access``): the route's access check alone, answered 204 or 403."""
+"""The access check (``/_access``): the route runs up to the access check, then says 204 or 403."""
 
 from uuid import uuid4
 
@@ -33,19 +33,19 @@ async def test_a_reader_gets_204_and_the_images_etag_without_a_download(
         )
     assert gate.status_code == 204
     assert gate.content == b""
-    assert gate.headers["etag"] == image.headers["etag"]  # nginx's cache key is the image's ETag
+    assert gate.headers["etag"] == image.headers["etag"]  # nginx caches the image under this ETag
     assert other.headers["etag"] != gate.headers["etag"]
-    assert fake.content_calls == 1  # the image's download only: the gate draws nothing
+    assert fake.content_calls == 1  # one download, for the image: the check downloads nothing
 
 
 @pytest.mark.parametrize(
     ("headers", "params", "refusal"),
     [
-        (bearer(OUTSIDER), {}, None),  # entitycore: 404, not readable
+        (bearer(OUTSIDER), {}, None),  # entitycore says 404: they can't see it
         ({}, {}, None),  # no token: 401
         (bearer(), {"dpi": "5"}, None),  # bad input: 422
-        (bearer(), {}, ErrorCode.Unauthenticated),  # entitycore refused the token
-        (bearer(), {}, ErrorCode.EntitycoreUnavailable),  # 503: no answer is a "no"
+        (bearer(), {}, ErrorCode.Unauthenticated),  # entitycore rejects the token
+        (bearer(), {}, ErrorCode.EntitycoreUnavailable),  # 503: no answer counts as "no"
     ],
 )
 async def test_everything_else_is_403(
