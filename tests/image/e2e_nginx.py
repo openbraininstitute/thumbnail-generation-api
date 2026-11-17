@@ -34,7 +34,7 @@ class Entitycore:
 
     metadata = 0
     downloads = 0
-    down = False  # True: every call gets 503
+    down = False  # True: every call is a 503
     digest = hashlib.sha256(SWC).hexdigest()
     lock = threading.Lock()
 
@@ -358,7 +358,7 @@ def run(port: int) -> None:
 
 
 def access_checks(port: int, preview: str, image: bytes) -> None:
-    """The image is already cached, yet only callers entitycore allows get it."""
+    """A cached image goes only to callers entitycore allows."""
     for who, token in (("an outsider", OUTSIDER), ("a made-up token", "Bearer junk")):
         status, headers, body = get(port, preview, Authorization=token, Origin=ALLOWED_ORIGIN)
         check(
@@ -379,7 +379,7 @@ def access_checks(port: int, preview: str, image: bytes) -> None:
         (status, RAW_HEADERS),
     )
 
-    # The old nginx key read the first entity_id and the app the last; now only the app reads it.
+    # The old key read the first entity_id, the app the last: only the app reads it now.
     other = "00000000-0000-0000-0000-00000000e002"
     status, headers, _ = get(port, f"{preview}&entity_id={other}", Authorization=MEMBER)
     check(
@@ -412,7 +412,7 @@ def access_checks(port: int, preview: str, image: bytes) -> None:
         started = time.perf_counter()
         get(port, preview, Authorization=MEMBER)
         times.append((time.perf_counter() - started) * 1000)
-    # Shown, not checked: this entitycore is a local fake, and a real one is slower.
+    # Not a check: a local fake entitycore, a real one is slower.
     print(f"info hit with its access check: median {statistics.median(times):.1f} ms (100 hits)")
 
 

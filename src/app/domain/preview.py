@@ -14,9 +14,7 @@ from pydantic import Field
 from app.domain.types import Value
 
 RENDER_VERSION = "1"
-"""Bump this when a renderer draws differently. Every ETag changes, so browsers and nginx (whose
-cache key is the ETag) fetch the new image.
-"""
+"""Bump when a renderer draws differently: every ETag changes, in browsers and in nginx."""
 
 
 class ImageFormat(StrEnum):

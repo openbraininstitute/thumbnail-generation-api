@@ -88,7 +88,7 @@ class RequestLog:
                     emit = log.error
                 elif path.endswith(QUIET_SUFFIX) or (
                     status == access.ALLOWED and path.startswith(access.PREFIX)
-                ):  # a passed access check: nginx already logs its time, as "gate"
+                ):  # an allowed check: nginx logs its time ("gate")
                     emit = log.debug
                 else:
                     emit = log.info
