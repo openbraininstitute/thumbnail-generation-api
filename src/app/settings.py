@@ -4,6 +4,7 @@
 ``SENTRY_DSN``...). No dotenv file is read. Every setting is explained in ``.env.example``.
 """
 
+import logging
 import re
 from enum import StrEnum
 from functools import lru_cache
@@ -19,6 +20,8 @@ from app.domain.types import Value
 
 SCOPE_NAME = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.]*")
 ORIGIN = re.compile(r"\*|https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?")
+# "https://*.a.org": in the origin list all OBI services share; Starlette never matches it.
+WILDCARD_ORIGIN = re.compile(r"https?://\*\.[A-Za-z0-9.-]+(:[0-9]{1,5})?")
 MIB = 1024 * 1024
 
 
@@ -113,13 +116,23 @@ class ApiSettings(BaseSettings):
     @field_validator("cors_origins")
     @classmethod
     def _origins_are_origins(cls, value: list[str]) -> list[str]:
-        """Each entry is ``*`` or ``scheme://host[:port]``: it is written into nginx's config."""
-        for origin in value:
+        """Each entry is ``*`` or ``scheme://host[:port]``: it is written into nginx's config.
+
+        A ``scheme://*.host`` entry is dropped with a warning, as Starlette ignores it: a pattern
+        belongs in ``CORS_ORIGIN_REGEX``. Any other entry fails the start.
+        """
+        wildcards = [origin for origin in value if WILDCARD_ORIGIN.fullmatch(origin)]
+        if wildcards:  # stdlib logging: stderr; entrypoint.sh writes stdout into nginx's config
+            logging.getLogger(__name__).warning(
+                "WHITELISTED_CORS_URLS: dropped %s, not origins; use CORS_ORIGIN_REGEX", wildcards
+            )
+        origins = [origin for origin in value if origin not in wildcards]
+        for origin in origins:
             ensure(
                 ORIGIN.fullmatch(origin),
                 lambda origin=origin: ValueError(f"not an origin: {origin!r}"),
             )
-        return value
+        return origins
 
     @field_validator("cors_origin_regex", mode="after")
     @classmethod
