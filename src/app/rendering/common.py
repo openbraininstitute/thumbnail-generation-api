@@ -15,6 +15,9 @@ from matplotlib.figure import Figure
 from app.domain.errors import DomainError, ErrorCode
 from app.domain.guards import match_error
 from app.domain.preview import ImageFormat
+from app.logs import get_logger
+
+log = get_logger("render")
 
 mpl.use("agg")  # neurom imports pyplot; on a server there is no display backend to pick
 
@@ -65,7 +68,9 @@ def parsed[T](parse: Callable[[], T], what: str) -> T:
     """
     try:
         return parse()
-    except Exception as error:  # noqa: BLE001 - any parser error; the table decides
+    except Exception as error:  # any parser error; the table decides
+        if not isinstance(error, DomainError):  # the 422 says "could not be read"; the log, why
+            log.warning("asset unreadable", what=what, exc_info=error)
         return match_error(
             error,
             {
