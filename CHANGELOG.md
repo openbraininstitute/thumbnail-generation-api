@@ -21,15 +21,16 @@ Re-architecture. Same URLs, parameters, operation ids and images.
 - The app runs as www-data, not root. NWB datasets over 256 MiB once decoded are refused before
   reading (a small compressed file could fill the memory). CORS values that could change nginx's
   config stop the start. `X-Content-Type-Options: nosniff` everywhere.
-- Not changed yet (planned next): a cached image is sent to any request with a bearer token,
-  without checking that the caller may read the entity.
+- Every preview request is checked with entitycore, a cache hit too: nginx asks the app first
+  (`auth_request`), and a caller who may not read the entity never gets a stored image. The old
+  cache sent a stored image to any request with a bearer token.
 
 ### Fixed
 
 - Errors return their real status (401, 403, 404, 409, 422, 503, 500). Every `ApiError` was 400.
 - entitycore 401 and 403 are passed on instead of becoming 404 or 500.
 - An ion channel recording with one trace no longer fails (division by zero).
-- A model trace uses the latest `thumbnail` validation result; nginx keeps it 1 h, not 30 days.
+- A model trace uses the latest `thumbnail` validation result (the cache key follows the file).
 - Drawings wait first come, first served: small files no longer starve a large one.
 - A 500 carries `X-Request-ID` and `Server-Timing`, and its log line has the request id.
 
@@ -37,12 +38,15 @@ Re-architecture. Same URLs, parameters, operation ids and images.
 
 - Errors are RFC 9457 problems (`application/problem+json`) with a stable `code`; the kept codes
   (`ASSET_NOT_FOUND`, `CONTENT_EMPTY`, `VALIDATION_RESULT_NOT_FOUND`) keep their value.
-- nginx cache key: only the parameters that change the image, in a fixed order (query order and
-  unknown parameters no longer split the cache). Only images are stored: the old config stored a
+- nginx cache key: the image's `ETag` (the file's digest and the drawing parameters), read by the
+  app, so query order and unknown parameters no longer split the cache and a changed file is a
+  new entry. Only images are stored: the old config stored a
   404 for a minute, so one refused caller hid the image from everyone. The stored image holds no
   CORS header; nginx adds it per request from the app's allow-list (the old cache sent the first
   caller's origin to everyone). `proxy_cache_lock` draws once for concurrent misses; keep-alive
   connections to the app. nginx logs are JSON with the app's `request_id`.
+- nginx cache: 8 GB on disk and about 500 000 images (was 1 GB and 80 000); an image unused
+  for 7 days is dropped (was 24 hours).
 - granian replaces gunicorn under supervisord. Port 80 and `{BASE_PATH}/health` are unchanged.
 - Each log line is one write: lines of nginx and the two app workers no longer merge.
 - One pooled HTTP client per process for entitycore and storage (was one per request).

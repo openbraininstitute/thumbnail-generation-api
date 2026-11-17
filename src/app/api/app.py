@@ -14,6 +14,7 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import problems, routes
+from app.api.access import AccessGate
 from app.api.request_log import RequestLog
 from app.application.admission import Admission
 from app.application.ports import EntityCore
@@ -95,6 +96,7 @@ def create_app(settings: Settings | None = None, entitycore: EntityCore | None =
     )
     app.state.settings = settings
     problems.install(app)
+    app.add_middleware(AccessGate)  # innermost: RequestLog logs the gate's own path and status
     app.add_middleware(RequestLog)
     # Outermost, so a preflight never reaches the routes. Bearer tokens only: no credentials.
     app.add_middleware(

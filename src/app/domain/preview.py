@@ -14,9 +14,8 @@ from pydantic import Field
 from app.domain.types import Value
 
 RENDER_VERSION = "1"
-"""Bump when a renderer draws differently: every browser ETag is then stale.
-
-nginx's cache key has no version: its cache is emptied by a deploy (a new task, no volume).
+"""Bump when a renderer draws differently: every ETag is then new, in browsers and in nginx
+(its cache key is the ETag).
 """
 
 
