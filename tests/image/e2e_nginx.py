@@ -130,7 +130,8 @@ def main() -> int:
             "--name",
             name,
             "--read-only",
-            *[arg for v in volumes for arg in ("--tmpfs", v)],
+            # As ECS mounts them: root-owned, 0755 (entrypoint.sh opens /tmp to the app).
+            *[arg for v in volumes for arg in ("--tmpfs", f"{v}:mode=0755")],
             "--add-host=host.docker.internal:host-gateway",
             "-p",
             f"127.0.0.1:{port}:80",
