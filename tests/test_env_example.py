@@ -74,6 +74,15 @@ def test_cors_values_that_could_change_nginx_config_are_refused() -> None:
     assert ApiSettings(cors_origins=["*", "http://localhost:3000"]).cors_origins
 
 
+def test_a_wildcard_origin_is_dropped_not_fatal(caplog: pytest.LogCaptureFixture) -> None:
+    # The staging list all OBI services share (infra main.tf, core_web_app_origins).
+    shared = ["https://preview.openbraininstitute.org", "https://*.preview.openbraininstitute.org"]
+    assert ApiSettings(cors_origins=shared).cors_origins == shared[:1]
+    assert "https://*.preview.openbraininstitute.org" in caplog.text
+    with pytest.raises(ValidationError):
+        ApiSettings(cors_origins=['https://*.a.test"'])  # still not written to nginx
+
+
 def test_the_largest_asset_follows_the_memory_budget() -> None:
     assert Settings().max_asset_bytes * MEMORY_FACTOR <= Settings().render.memory_bytes
     budget = RenderSettings(memory_bytes=300 * MIB)
