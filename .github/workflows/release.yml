@@ -1,0 +1,76 @@
+name: release
+
+# A push to main: run the checks, push the image to ECR as YYYY.MM.DD.N, then tag the commit.
+# Deploy: set the tag in aws-terraform-deployment (staging.tfvars, production.tfvars).
+on:
+  push:
+    branches: [main]
+
+# One at a time (two could pick the same tag), never cancelled halfway.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    uses: ./.github/workflows/on_merge_request.yml
+
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write  # push the git tag
+      id-token: write  # OIDC: AWS role, no stored key
+      actions: write   # build cache (type=gha)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # all tags, for the next number
+
+      - name: Determine new tag
+        run: |
+          TODAY=$(date -u +'%Y.%m.%d')
+          LATEST=$(git tag --list "${TODAY}.*" --sort=-v:refname | grep -E "^${TODAY//./\\.}\.[0-9]+$" | head -n 1 || true)
+          NEW_TAG="${TODAY}.$(( ${LATEST##*.} + 1 ))"
+          echo "NEW_TAG=${NEW_TAG}" >> "$GITHUB_ENV"
+          echo "New tag: ${NEW_TAG}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::985539765147:role/gh_ecr_push_thumbnail-generation-api
+          aws-region: us-east-1
+
+      - name: Authenticate with AWS Public ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ vars.PUBLICECR_URI }}:${{ env.NEW_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
+
+      - name: Tag the commit
+        run: |
+          git tag "${NEW_TAG}"
+          git push origin "${NEW_TAG}"
+          echo "Released \`${{ vars.PUBLICECR_URI }}:${NEW_TAG}\`" >> "$GITHUB_STEP_SUMMARY"

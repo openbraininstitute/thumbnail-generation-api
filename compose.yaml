@@ -1,0 +1,71 @@
+# `make up`: the service as in production, plus a cache dashboard. Settings: .env.
+name: thumbnail
+
+services:
+  api:
+    build: .
+    image: ${IMAGE:-thumbnail-generation-api:local}
+    ports:
+      - "127.0.0.1:${API_PORT:-8003}:80" # nginx; granian stays inside the container
+    env_file:
+      - path: .env
+        required: false
+    read_only: true # as in ECS, with the same writable folders:
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/lib/nginx
+      - /var/run
+      - /var/cache/fontconfig
+    volumes:
+      - ./nginx/local:/etc/nginx/local.d:ro # the access log GoAccess reads
+      - nginx-log:/var/log/nginx-local
+    restart: unless-stopped
+    # `make watch`: a change rebuilds the image (about 40 s) and replaces the container.
+    develop:
+      watch:
+        - {action: rebuild, path: ./src, ignore: ["**/__pycache__/"]}
+        - {action: rebuild, path: ./nginx/nginx.conf}
+        - {action: rebuild, path: ./nginx/includes}
+        - {action: rebuild, path: ./supervisord.conf}
+        - {action: rebuild, path: ./entrypoint.sh}
+        - {action: rebuild, path: ./pyproject.toml}
+        - {action: rebuild, path: ./uv.lock}
+        - {action: rebuild, path: ./Dockerfile}
+        - {action: rebuild, path: ./.env}
+
+  # Live HTML report of nginx's access log (https://goaccess.io): cache HIT, MISS, BYPASS.
+  goaccess:
+    image: allinurl/goaccess:1.10.2
+    depends_on:
+      api:
+        condition: service_healthy # the log file exists by then
+    volumes:
+      - nginx-log:/logs:ro
+      - cache-report:/report
+    command:
+      - /logs/access.log
+      - --log-format=%h - [%d:%t %^] "%r" %s %b "%R" "%u" %T %C
+      - --date-format=%d/%b/%Y
+      - --time-format=%H:%M:%S
+      - --output=/report/index.html
+      - --real-time-html
+      - --port=7890
+      - --ws-url=ws://localhost:${CACHE_UI_PORT:-7890}
+      - --html-report-title=Thumbnail cache
+    restart: unless-stopped
+
+  # Serves the report on one local port.
+  cache-ui:
+    image: nginx:1.29.3-alpine
+    depends_on: [goaccess]
+    ports:
+      - "127.0.0.1:${CACHE_UI_PORT:-7890}:80"
+    volumes:
+      - ./nginx/dashboard/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - cache-report:/report:ro
+    restart: unless-stopped
+
+volumes:
+  nginx-log:
+  cache-report:
