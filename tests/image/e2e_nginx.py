@@ -1,13 +1,15 @@
 """End-to-end check of the image: nginx cache + granian app, against a fake entitycore.
 
 ``make e2e``. Runs the image as ECS does (read-only root, BASE_PATH) and checks over HTTP: a hit
-calls nothing, errors are never stored, CORS per origin, concurrent misses draw once.
+asks entitycore for access and downloads nothing, a caller without access never gets a stored
+image, errors are never stored, CORS per origin, concurrent misses draw once.
 """
 
 import hashlib
 import http.client
 import json
 import socket
+import statistics
 import subprocess
 import sys
 import threading
@@ -32,6 +34,7 @@ class Entitycore:
 
     metadata = 0
     downloads = 0
+    down = False  # True: every call is a 503
     digest = hashlib.sha256(SWC).hexdigest()
     lock = threading.Lock()
 
@@ -43,6 +46,8 @@ class Handler(BaseHTTPRequestHandler):
         """Quiet."""
 
     def _send(self, status: int, body: bytes = b"", headers: dict[str, str] | None = None) -> None:
+        if Entitycore.down:
+            status, body, headers = 503, b"", None
         self.send_response(status)
         for name, value in (headers or {}).items():
             self.send_header(name, value)
@@ -168,6 +173,12 @@ def main() -> int:
             and {"HIT", "MISS"} <= {line["cache"] for line in nginx_lines},
             nginx_lines[-1:],
         )
+        hits = [line for line in nginx_lines if line["cache"] == "HIT"]
+        check(
+            "nginx logs the access check's time on every hit",
+            bool(hits) and all(float(line["gate"]) >= 0 for line in hits),
+            hits[-1:],
+        )
     finally:
         if failures:
             logs = docker_logs(name)
@@ -279,8 +290,8 @@ def run(port: int) -> None:
         (status, headers.get("x-cache")),
     )
     check(
-        "a hit makes no call to entitycore",
-        (Entitycore.metadata, Entitycore.downloads) == (metadata, 1),
+        "a hit asks entitycore for access once (metadata) and downloads nothing",
+        (Entitycore.metadata, Entitycore.downloads) == (metadata + 1, 1),
         (Entitycore.metadata - metadata, Entitycore.downloads),
     )
     check(
@@ -343,12 +354,66 @@ def run(port: int) -> None:
         Entitycore.downloads - downloads,
     )
 
-    status, headers, _ = get(port, preview, Authorization=OUTSIDER)
+    access_checks(port, preview, first)
+
+
+def access_checks(port: int, preview: str, image: bytes) -> None:
+    """A cached image goes only to callers entitycore allows."""
+    for who, token in (("an outsider", OUTSIDER), ("a made-up token", "Bearer junk")):
+        status, headers, body = get(port, preview, Authorization=token, Origin=ALLOWED_ORIGIN)
+        check(
+            f"cached image, {who}: the app's 404 problem, not the image",
+            status == 404
+            and json.loads(body)["code"] == "ASSET_NOT_FOUND"
+            and headers.get("content-type") == "application/problem+json"
+            and "x-cache" not in headers
+            and headers.get("access-control-allow-origin") == ALLOWED_ORIGIN,
+            (status, headers.get("x-cache"), body[:80]),
+        )
+    status, headers, body = get(port, preview)
     check(
-        "KNOWN GAP (planned next): a cached image is sent to any token, no access check",
-        status == 200 and headers.get("x-cache") == "HIT",
-        status,
+        "cached image, no token: 401 problem with one WWW-Authenticate",
+        status == 401
+        and json.loads(body)["code"] == "UNAUTHENTICATED"
+        and [k for k, _ in RAW_HEADERS].count("www-authenticate") == 1,
+        (status, RAW_HEADERS),
     )
+
+    # The old key read the first entity_id, the app the last: only the app reads it now.
+    other = "00000000-0000-0000-0000-00000000e002"
+    status, headers, _ = get(port, f"{preview}&entity_id={other}", Authorization=MEMBER)
+    check(
+        "a repeated parameter: the app's reading decides, no stored image of the other reading",
+        status == 404 and "x-cache" not in headers,
+        (status, headers.get("x-cache")),
+    )
+
+    status, _, _ = get(port, f"/_access{preview}", Authorization=MEMBER)
+    check("a client cannot ask the gate itself: 404", status == 404, status)
+
+    Entitycore.down = True
+    status, headers, body = get(port, preview, Authorization=MEMBER)
+    Entitycore.down = False
+    check(
+        "entitycore down: no access check, so no stored image (503)",
+        status == 503 and json.loads(body)["code"] == "ENTITYCORE_UNAVAILABLE",
+        (status, body[:80]),
+    )
+
+    status, headers, body = get(port, preview, Authorization=MEMBER)
+    check(
+        "the member after all the refusals: still the HIT, same bytes",
+        status == 200 and headers.get("x-cache") == "HIT" and body == image,
+        (status, headers.get("x-cache")),
+    )
+
+    times = []
+    for _ in range(100):
+        started = time.perf_counter()
+        get(port, preview, Authorization=MEMBER)
+        times.append((time.perf_counter() - started) * 1000)
+    # Not a check: a local fake entitycore, a real one is slower.
+    print(f"info hit with its access check: median {statistics.median(times):.1f} ms (100 hits)")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 """Preview use cases: ``plan`` reads the asset's metadata (ETag, size); ``draw`` renders it.
 
-Both run only on an nginx cache miss. entitycore decides access.
+``plan`` runs on every request (it is nginx's access check, ``api/access.py``), ``draw`` only on
+a cache miss. entitycore decides access.
 """
 
 import time

@@ -41,18 +41,28 @@ Its CI (`autogen-types`) fails when the committed types differ from what staging
 ### Access
 
 Every preview request needs `Authorization: Bearer <token>`, and may send the `virtual-lab-id`
-and `project-id` headers. On a cache miss the service reads the asset from entitycore with the
-caller's token and headers, so entitycore refuses a caller who may not read it (404).
+and `project-id` headers. entitycore decides who may read an entity; this service holds no access
+rule of its own.
 
-**Known gap (planned next, owner decision 2026-11-10):** a cached image is sent to any request with
-a bearer token, without checking that the caller may read the entity. As in the old service.
+Every request is checked, a cache hit too. nginx first asks the app (`auth_request`, the external
+authorization pattern), which reads the asset's metadata from entitycore with the caller's token
+and headers: no download, no drawing ([src/app/api/access.py](src/app/api/access.py)).
+
+- Allowed: nginx serves its stored image, or has it drawn and stores it.
+- Refused, no token, or entitycore down: nothing comes from the cache; the app answers the error
+  (401, 404, 503).
+
+The check is not cached here: entitycore already keeps a user's Keycloak groups for 5 minutes.
 
 ### Caching
 
 - **Server (nginx):** nginx runs in front of the app (supervisord) and keeps each image, keyed by
-  the parameters that change it (`entity_id`, `asset_id`, `dpi`, `format`, `target`, `w`, `h`), in
-  a fixed order. A hit makes no call to the app or entitycore. Only images are stored, never errors.
-  Concurrent misses share one render (`proxy_cache_lock`). 1 GB on disk, 7 days unused.
+  its `ETag`: the file's digest and the drawing parameters (`dpi`, `format`, `target`, `w`, `h`).
+  The access check returns that ETag, so a changed file is a new entry. A hit costs the access
+  check (one entitycore metadata call), no download and no drawing. Only images are stored, never
+  errors.
+  Concurrent misses share one render (`proxy_cache_lock`). 8 GB on disk (about 500 000 images),
+  7 days unused.
   [nginx/nginx.conf](nginx/nginx.conf). Every preview response says `X-Cache: HIT` or `MISS`.
 - **Client:** `Cache-Control: private, max-age=3600` and an `ETag`: the browser reuses the image
   for an hour, then revalidates and gets an empty 304 when it is unchanged. No shared proxy stores it.
@@ -127,7 +137,7 @@ make up
 - API through nginx and its cache: http://localhost:8003/docs
 - Cache dashboard ([GoAccess](https://goaccess.io), live): http://localhost:7890. Its "Cache
   Status" panel counts HIT (served from the cache), MISS (drawn, then stored) and BYPASS (not
-  cacheable: health, docs, no token). "Requested Files" lists every image URL with its hits and
+  cacheable: health, docs, refused previews). "Requested Files" lists every image URL with its hits and
   times.
 
 ```bash
@@ -151,8 +161,8 @@ To start clean: `make dashboard-clear` empties the dashboard's data (it keeps ca
 `make cache-clear` empties the image cache (it keeps the dashboard), and `make down` followed by
 `docker compose down -v` removes both for good.
 
-`make cache-ls` lists what nginx's cache holds right now, one line per image (path, entity,
-asset, dpi, format, target, w, h), then the count and the size. `make cache-clear` empties it,
+`make cache-ls` lists what nginx's cache holds right now, one line per image (path and ETag),
+then the count and the size. `make cache-clear` empties it,
 `make logs` follows nginx and app logs, `make down` stops everything.
 
 ### The app alone, with reload (no nginx, so no server cache)
@@ -263,10 +273,10 @@ channel recordings and model traces, from an empty cache and then again from the
 one after the other, never together: they use staging entitycore. Results: `reports/`.
 
 `make smoke` draws every golden case inside the Docker image. `make e2e` runs the image against a
-fake entitycore and checks over HTTP: no token is 401, a refused miss is not stored, a hit makes
-no entitycore call, query order does not matter, 304, CORS and preflight, eight concurrent misses
-download once, and the known access gap (a check that will change when access is added). CI runs
-both.
+fake entitycore and checks over HTTP: no token is 401, a refused miss is not stored, a hit asks
+entitycore for access and downloads nothing, a stored image is refused to an outsider and to a
+made-up token, entitycore down means no stored image, query order does not matter, 304, CORS and
+preflight, eight concurrent misses download once. CI runs both.
 
 ## Acknowledgements
 

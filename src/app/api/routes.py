@@ -1,8 +1,9 @@
 """The preview routes, ``/core/{entity}/preview``, called by core-web-app and neuroagent-ts.
 
 Do not rename functions, paths or parameters: neuroagent-ts names its generated types after the
-operation ids (``tests/api/test_openapi.py`` checks them). nginx caches each image, so these run
-only on a cache miss; the browser keeps it an hour (``private``), then revalidates with the ETag.
+operation ids (``tests/api/test_openapi.py`` checks them). nginx checks access with the route
+first (``api/access.py``); a drawing runs only on a cache miss. Browsers keep an image an hour
+(``private``), then revalidate with the ETag.
 """
 
 from typing import Annotated, Literal
@@ -12,6 +13,7 @@ from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
+from app.api import access
 from app.api.problems import RESPONSES
 from app.application.previews import Plan, Previews, is_current
 from app.domain.errors import ErrorCode
@@ -25,8 +27,6 @@ from app.domain.preview import (
 )
 
 CACHE_CONTROL = "private, max-age=3600"
-# nginx keeps a model trace 1 h, not 30 d: its key has no asset id, and a re-run adds a new trace.
-MODEL_TRACE_NGINX_SECONDS = 3600
 MAX_PIXELS_SIDE = 4096  # a simulation plot side; bounds what one request can make kaleido draw
 
 IMAGE = {  # the 200 answer: an image in the asked format (png by default)
@@ -89,15 +89,14 @@ Format = Annotated[ImageFormat, Query(alias="format")]
 Side = Annotated[int | None, Query(ge=1, le=MAX_PIXELS_SIDE)]
 
 
-async def answer(
-    request: Request,
-    previews: Previews,
-    caller: Caller,
-    plan: Plan,
-    extra: dict[str, str] | None = None,
-) -> Response:
-    """The image, or a 304 when the caller's copy is current (checked before any download)."""
-    headers = {"ETag": plan.etag, "Cache-Control": CACHE_CONTROL, **(extra or {})}
+async def answer(request: Request, previews: Previews, caller: Caller, plan: Plan) -> Response:
+    """The image, or a 304 when the caller's copy is current (checked before any download).
+
+    An access check gets 204 and the ETag: a ``plan`` means entitycore said yes.
+    """
+    if request.scope.get(access.CHECK):
+        return Response(status_code=access.ALLOWED, headers={"ETag": plan.etag})
+    headers = {"ETag": plan.etag, "Cache-Control": CACHE_CONTROL}
     if is_current(request.headers.get("if-none-match"), plan.etag):
         return Response(status_code=304, headers=headers)
     content = await previews.draw(caller, plan)
@@ -171,9 +170,7 @@ async def get_model_trace_preview(
 ) -> Response:
     """The stored trace thumbnail of an e-model or me-model (its ``thumbnail`` validation)."""
     plan = await previews.plan_model_trace(caller, entity_id)
-    # X-Accel-Expires: nginx's lifetime for this answer (nginx hides it from the client).
-    expires = {"X-Accel-Expires": str(MODEL_TRACE_NGINX_SECONDS)}
-    return await answer(request, previews, caller, plan, expires)
+    return await answer(request, previews, caller, plan)
 
 
 # Last: its first path segment is a variable, so it would match the fixed paths above.

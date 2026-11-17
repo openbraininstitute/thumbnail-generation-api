@@ -11,6 +11,7 @@ from uuid import uuid7
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app import timing as timings
+from app.api import access
 from app.api.problems import problem
 from app.domain.errors import ErrorCode
 from app.logs import bind, get_logger
@@ -85,7 +86,9 @@ class RequestLog:
                 path: str = scope["path"]  # never the query string
                 if status >= 500:  # noqa: PLR2004 - HTTP server error
                     emit = log.error
-                elif path.endswith(QUIET_SUFFIX):
+                elif path.endswith(QUIET_SUFFIX) or (
+                    status == access.ALLOWED and path.startswith(access.PREFIX)
+                ):  # an allowed check: nginx logs its time ("gate")
                     emit = log.debug
                 else:
                     emit = log.info

@@ -171,7 +171,6 @@ async def test_model_trace_is_the_stored_png(fake: FakeEntityCore) -> None:
     assert found.status_code == 200
     assert found.headers["content-type"] == "image/png"
     assert found.content == png
-    assert found.headers["x-accel-expires"] == "3600"  # nginx keeps a trace 1 h, not 30 d
     assert missing.status_code == 404
     assert missing.json()["code"] == "VALIDATION_RESULT_NOT_FOUND"
 
